@@ -63,13 +63,6 @@ varData::varData(bool _typedef, int _type): type(_type), isTypdef(_typedef){}
 
 varData::varData(int _offset, int _elements, int _size, bool _global, bool _pointer): offset(_offset), elements(_elements), size(_size), global(_global), isPointer(_pointer){}
 
-//---------------------------------------------//
-//----------------EnumContext------------------//
-//---------------------------------------------//
-
-void EnumContext::reset(){
-    nextVal = 0;
-}
 
 //---------------------------------------------//
 //----------------Scope_Struct-----------------//
@@ -111,43 +104,9 @@ void funcScope::decScope(std::ostream& stream){
 //----------------Compiler_Context-------------//
 //---------------------------------------------//
 
-void compilerContext::setup(std::ostream& stream){
-    addToStack(8, stream);
-    stream << "sw $fp, 0($sp)" << std::endl;
-    stream << "sw $31, 4($sp)" << std::endl;
-}
-
-void compilerContext::endFunc(std::ostream& stream){
-    stream << "lw $31, "<<  (functions.back().memUsed - 4) << "($sp) \nnop" << std::endl; 
-    stream << "addiu $sp, $sp, " << functions.back().memUsed <<std::endl; //$fp needs to be reset in func call.
-    stream << "jr $31 \nnop"<< std::endl; 
-    stream << std::endl; 
-}
 
 std::map<std::string, varData>* compilerContext::currentBindings(){
     return &functions.back().scopes.back().bindings;
-}
-
-scope* compilerContext::currentScope(){
-    return &functions.back().scopes.back();
-}
-
-funcScope* compilerContext::currentFunc(){
-    return &functions.back();
-}
-
-void compilerContext::addToStack(int size, std::ostream& stream){
-    if(functions.size()> 0){
-        stream << "addiu $sp, $sp, " << -size << std::endl;
-        functions.back().memUsed += size;
-    }
-}
-
-void compilerContext::removeFromStack(int size, std::ostream& stream){
-    if(functions.size()> 0){
-        stream << "addiu $sp, $sp, " << size << std::endl;
-        functions.back().memUsed -= size;
-    }
 }
 
 std::string compilerContext::generateUniqueLabel(){

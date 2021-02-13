@@ -27,7 +27,6 @@ class declaration : public Node{
 		if(declarator_list != NULL)declarator_list->printTree(n+1);
 	}
 
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 // declaration_specifiers : Contains types for a variable (just int for now)
@@ -44,8 +43,6 @@ class declaration_specifiers : public Node{
 		std::cout << "Declaration Specifier: " << type_name << std::endl;
 
 	}
-	
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 // init_declarator: contains variable name and initial value
@@ -64,7 +61,6 @@ class init_declarator : public Node{
 		if(declaratorPtr != NULL){declaratorPtr->printTree(n+1);}
 		if(initialiserPtr != NULL){initialiserPtr->printTree(n+1);}
 	}
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 // contains a direct_declarator, pointers not implemented
@@ -87,7 +83,6 @@ class declarator : public Node{
 		directDeclarator->printPy(context, stream);
 		pointerPtr->printPy(context, stream);
 	} 
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 // direct_declarator : Contains an identifier used for the newly defined variable
@@ -104,7 +99,6 @@ class direct_declarator : public Node{
 		std::cout << "Direct Declarator: " << identifier << std::endl;
 	}
 
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 // initialiser : Initial value for new variable
@@ -122,8 +116,6 @@ class initialiser : public Node{
 		assignment->printTree(n);
 		std::cout << std::endl;
 	}
-
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 
@@ -144,8 +136,6 @@ class function_definition : public Node{
 		if(name != NULL){ name->printTree(n+1);}
 		if(statement != NULL){statement->printTree(n+1);}
 	}
-	
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 class ArrayDeclaration : public Node{
@@ -168,8 +158,6 @@ class ArrayDeclaration : public Node{
 			std::cout << std::endl;
 		}
 	}
-
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 class parameter_declaration : public Node{
@@ -185,8 +173,6 @@ class parameter_declaration : public Node{
 		if(specifiers != NULL){specifiers->printTree(n+1);}
 		if(dec != NULL){dec->printTree(n+1);}
 	}
-
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 class FunctionDeclaration : public Node{
@@ -204,7 +190,6 @@ class FunctionDeclaration : public Node{
 
 	}
 
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 class ObjectInitialiser : public Node{
@@ -218,7 +203,7 @@ class ObjectInitialiser : public Node{
 		std::cout<< "Object Initlialiser:" << std::endl;
 		if(initList != NULL){initList->printTree(n+1);}
 	}
-	void printMips(compilerContext& ctx, std::ostream& stream);
+	
 };
 
 
@@ -237,7 +222,7 @@ class typedef_declaration : public Node{
 		if(defName != NULL){defName->printTree(n+1);}
 	}
 
-	void printMips(compilerContext& ctx, std::ostream& stream);
+	
 };
 
 class TypdefSpecifier : public Node{
@@ -250,7 +235,7 @@ class TypdefSpecifier : public Node{
 		}
 		std::cout << "Typedef: " << defName << std::endl;
 	}
-	void printMips(compilerContext& ctx, std::ostream& stream);
+	
 };
 
 class struct_specifier : public Node{
@@ -387,7 +372,7 @@ class EnumConstants : public Node{
 		if(enumList != NULL){enumList->printTree(n+1);}
 	}
 
-	void printMips(compilerContext& ctx, std::ostream& stream);
+	
 };
 
 class EnumDeclaration : public EnumConstants {
@@ -415,7 +400,7 @@ class EnumSpecifier : public Node {
 		std::cout << "Enum Specifier: " << id << std::endl;
 	}
 
-	void printMips(compilerContext& ctx, std::ostream& stream);
+	
 };
  
 class enumerator : public Node {
@@ -439,7 +424,7 @@ class enumerator : public Node {
 		}
 	}
 
-	void printMips(compilerContext& ctx, std::ostream& stream);
+	
 };
 
 

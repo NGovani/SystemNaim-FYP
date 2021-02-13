@@ -62,6 +62,7 @@ class BranchNode : public Node{
 				branches[i]->printPy(context, stream);
 			}
 		}
+
 };
 typedef BranchNode* BranchPtr;
 

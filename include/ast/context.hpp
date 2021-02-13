@@ -39,14 +39,6 @@ struct LoopContext{ //needed for continue and break
     LoopContext(std::string _brk, int _scope): brk(_brk), scopeLvl(_scope){} //for switches
 };
 
-struct EnumContext{
-    int nextVal = 0;
-    void reset();
-};
-
-struct SwitchContext{
-    std::string prevLabel;
-};
 
 struct varData{
     int offset;
@@ -81,7 +73,6 @@ struct funcScope{
     std::map<std::string, varData> parameters;
     std::map<std::string, varData> globalVars;
     std::vector<LoopContext> LoopsLabels;
-    std::vector<SwitchContext> swtchCtx;
 
     int memUsed = 0; //should be incremented as you add new bindings
     void incScope();
@@ -94,32 +85,13 @@ struct funcScope{
 struct compilerContext{
     
     std::vector<funcScope> functions;
-    std::map<std::string, varData> globalVars;
 
-    void setup(std::ostream& stream); //NOTE $fp should point to previous functions last element, this makes it possible to do $fp + memUsed to go back to the start address.
-    void endFunc(std::ostream& stream);
-    bool funcDef = false;
-    bool funcCall = false;
-    bool globalDefs = false;
-    bool getAddr = false;
-    bool ptrMath = false;
-    bool ptrCheck = false;
-    bool arrayCall = false;
-    std::string funcName; //used for .end flag at the end of assembly
 
     int labelGen = 0;
     std::string generateUniqueLabel();
     std::string generateLabel(std::string s);
 
-    bool freeRegs[32];
-
     std::map<std::string, varData>* currentBindings();
-    scope* currentScope();
-    funcScope* currentFunc();
-    void addToStack(int size, std::ostream& stream);
-    void removeFromStack(int size, std::ostream& stream);
-
-    EnumContext enumCtx;
     DeclaratorContext tempDeclarator; //can be used by declarators to keep track of info needed to add to bindings.
     
 };

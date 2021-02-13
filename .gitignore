@@ -1,0 +1,3 @@
+*.o
+src/c_parser.output
+bin/eval_expr

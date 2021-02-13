@@ -42,6 +42,7 @@ class declaration_specifier_list : public BranchNode{
 			branches[i]->printTree(n);
 		}
 	}
+	
 };
 
 // init_declarator_list : Holds RHS of variable declarations. 
@@ -171,7 +172,6 @@ class enumerator_list : public BranchNode{
 		}
 	}
 
-	void printMips(compilerContext& ctx, std::ostream& stream);
 };
 
 

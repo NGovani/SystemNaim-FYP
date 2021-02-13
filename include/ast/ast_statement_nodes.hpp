@@ -17,7 +17,7 @@ class compound_statement : public Node{
 		if(block_list != NULL) {block_list->printTree(n+1);}
 	}
 
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 // expression_statement: assignents, function calls, etc.
@@ -34,7 +34,7 @@ class expression_statement: public Node{
         if(stmt != NULL){stmt->printTree(n);}
         std::cout << std::endl;
     }
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 // block_item_list: list of declarations or statements
@@ -43,7 +43,11 @@ class block_item_list : public BranchNode{
     block_item_list(NodePtr item){
         branches.push_back(item);
     }
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    void printTree(int n){
+		for(int i = 0; i < (int)branches.size(); i++){
+			branches[i]->printTree(n);
+		}
+	}
 };
 
 class IfStatement : public Node{
@@ -63,7 +67,7 @@ class IfStatement : public Node{
         if(_false != NULL) {_false->printTree(n+1);}
 	}
 
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 class SwitchStatement : public Node{
@@ -80,7 +84,7 @@ class SwitchStatement : public Node{
         std::cout<< std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
 	}
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 }; 
 
 class WhileStatement : public Node{
@@ -97,7 +101,7 @@ class WhileStatement : public Node{
         std::cout<< std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 class DoStatement : public Node{
@@ -115,7 +119,7 @@ class DoStatement : public Node{
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
 
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 class ForStatement : public Node{
@@ -140,7 +144,7 @@ class ForStatement : public Node{
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
 
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 class LabelStatement : public Node{
@@ -172,7 +176,7 @@ class CaseStatement : public Node{
         std::cout << std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 class DefaultStatement : public Node{
@@ -186,7 +190,7 @@ class DefaultStatement : public Node{
 		std::cout << "Default Statement: " << std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 class ContinueStatement : public Node{
@@ -199,7 +203,7 @@ class ContinueStatement : public Node{
 		std::cout << "Continue Statement: " << std::endl;
     }
 
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 class BreakStatement : public Node{
@@ -211,7 +215,7 @@ class BreakStatement : public Node{
 		}
 		std::cout << "Break Statement: " << std::endl;
     }
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 class ReturnStatement : public Node{
@@ -228,7 +232,7 @@ class ReturnStatement : public Node{
         std::cout<<std::endl;
     }
 
-    void printMips(compilerContext& ctx, std::ostream& stream);
+    
 };
 
 

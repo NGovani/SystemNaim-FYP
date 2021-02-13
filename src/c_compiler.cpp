@@ -12,7 +12,7 @@ int main(int argc, char* argv[]){
     Node* ast = parseAST(argv[2]);
 
     //create context and ostream
-    compilerContext comCtx;
+    static compilerContext comCtx;
     std::ostream* os = &std::cout;
     std::ofstream stream;
     stream.open(argv[4]);
