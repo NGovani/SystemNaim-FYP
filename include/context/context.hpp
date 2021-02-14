@@ -11,10 +11,6 @@
 #include <algorithm>
 #include <sstream>
 
-
-
-
-
 struct DeclaratorContext{
     std::string id;
     bool initliased = false;
@@ -95,13 +91,61 @@ struct compilerContext{
     
 };
 
+enum StateType{
+    EXPRESSION,
+    FUNCTION_CALL,
+    BRANCH,
+    CONDITIONAL_BRANCH,
+};
 
-// ILContext :  Interface for all context methods. Adding states, new function
-// class IntermediateContext {
-// private:
-//     std::vector<functionCtx> functions; // seperate context for each function
-// public:
-// };
+struct expressionStateInfo{};
+struct functionStateInfo{};
+struct branchStateInfo{};
+struct conditionalStateInfo{};
+
+union stateInfoStructs{
+    expressionStateInfo expr;
+    functionStateInfo func;
+    branchStateInfo branch;
+    conditionalStateInfo conditional;
+};
+
+struct stateContainer{
+    StateType type;
+    stateInfoStructs info;
+};
+
+
+class stateInfo{
+private:
+    std::string stateName;
+    stateContainer state;
+public:
+    stateInfo(std::string name, stateContainer info): state(info), stateName(name){};
+};
+
+// moduleContext: keeps track of variables and states for a specific module.
+class moduleContext{
+private:
+    int stateCount;
+    std::vector<stateInfo> states; //list of all states to be converted into verilog states;
+    std::map<std::string, varData> variables;
+public:
+    moduleContext(): stateCount(0){}
+    std::string addState(std::string input, stateInfo stateData); //generates a state name and adds it the state list
+    void addVariable();
+};
+
+// systemContext :  contains all modules which are to be created. Allows access to 
+class systemContext {
+private:
+    std::map<std::string, moduleContext> modules; // Map where key = module name: val = module context
+
+public:
+    moduleContext* getCurrentModule();
+
+
+};
 
 // static compilerContext comCtx;
 
