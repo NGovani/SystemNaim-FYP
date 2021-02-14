@@ -14,7 +14,6 @@
 
 
 
-class Node; //never use any member functions for this class
 
 struct DeclaratorContext{
     std::string id;
@@ -28,7 +27,7 @@ struct DeclaratorContext{
     int initOffset = 0;
 
     int totSize();
-    void purge();
+    void purge(); //used when current declaration is done.
     void nextElement();
 };
 
@@ -96,7 +95,15 @@ struct compilerContext{
     
 };
 
-static compilerContext comCtx;
+
+// ILContext :  Interface for all context methods. Adding states, new function
+// class IntermediateContext {
+// private:
+//     std::vector<functionCtx> functions; // seperate context for each function
+// public:
+// };
+
+// static compilerContext comCtx;
 
 
  //------------------------------------------------------------------------------------------------------------//

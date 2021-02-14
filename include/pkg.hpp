@@ -18,7 +18,7 @@
 #include "ast/ast_spec_nodes.hpp"
 
 // Context used when compilining
-#include "ast/context.hpp"
+#include "context/context.hpp"
 
 
 extern Node *parseAST(char* fileName);

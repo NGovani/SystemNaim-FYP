@@ -1,4 +1,4 @@
-#include "../include/ast.hpp"
+#include "../include/pkg.hpp"
 #include <iostream>
 
 
@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     }
 
     //create AST
-    Node* ast = parseAST(NULL);
+    Node* ast = parseAST(argv[1]);
 
     std::cout << "parsed Tree" << std::endl;
     

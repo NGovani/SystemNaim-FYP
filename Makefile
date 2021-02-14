@@ -28,7 +28,7 @@ parser: src/c_lexer.yy.cpp
 
 parsertest : bin/eval_expr
 
-bin/eval_expr : include/ast/context.o include/ast/ast_spec_nodes.o include/ast/ast_branch_nodes.o include/ast/ast_expression_nodes.o include/ast/ast_statement_nodes.o src/eval_parser.o src/c_parser.tab.o src/c_lexer.yy.o
+bin/eval_expr : include/context/context.o include/ast/ast_spec_nodes.o include/ast/ast_branch_nodes.o include/ast/ast_expression_nodes.o include/ast/ast_statement_nodes.o src/eval_parser.o src/c_parser.tab.o src/c_lexer.yy.o
 	mkdir -p bin
 	g++ $(CPPFLAGS) -o bin/eval_expr $^
 
@@ -44,8 +44,8 @@ include/ast/ast_statement_nodes.o: include/ast/ast_statement_nodes.cpp include/a
 include/ast/ast_expression_nodes.o: include/ast/ast_expression_nodes.cpp include/ast/ast_expression_nodes.hpp
 	g++ $(CPPFLAGS) -c include/ast/ast_expression_nodes.cpp -o include/ast/ast_expression_nodes.o
 
-include/ast/context.o: include/ast/context.cpp include/ast/context.hpp
-	g++ $(CPPFLAGS) -c include/ast/context.cpp -o include/ast/context.o
+include/context/context.o: include/context/context.cpp include/context/context.hpp
+	g++ $(CPPFLAGS) -c include/context/context.cpp -o include/context/context.o
 
 src/c_lexer.yy.cpp : src/c_lexer.flex src/c_parser.tab.hpp
 	flex -o src/c_lexer.yy.cpp  src/c_lexer.flex

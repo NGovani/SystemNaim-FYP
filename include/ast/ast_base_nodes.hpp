@@ -9,7 +9,7 @@
 #include <map>
 #include <fstream>
 #include <cmath>
-#include "context.hpp"
+#include "../context/context.hpp"
 
 class Node{
 
@@ -38,33 +38,29 @@ class Node{
 typedef Node* NodePtr;
 
 class ExpressionNode : public Node{
-	public:
+public:
     virtual ~ExpressionNode()  {};
-
-
-
-		virtual int eval(){return 0;}
+	virtual int eval(){return 0;}
 };
 typedef ExpressionNode* ExpPtr;
 
 class BranchNode : public Node{
-    public:
-		std::vector<NodePtr> branches;
-		
-		void push(NodePtr n) {
-			branches.push_back(n);
-		}
+public:
+	std::vector<NodePtr> branches;
+	
+	void push(NodePtr n) {
+		branches.push_back(n);
+	}
 
-		virtual ~BranchNode()  {}
-		
-		virtual void printPy(pyContext& context, std::ostream& stream){
-			for(int i = 0; i < (int)branches.size(); i++){
-				branches[i]->printPy(context, stream);
-			}
+	virtual ~BranchNode()  {}
+	
+	virtual void printPy(pyContext& context, std::ostream& stream){
+		for(int i = 0; i < (int)branches.size(); i++){
+			branches[i]->printPy(context, stream);
 		}
+	}
 
 };
 typedef BranchNode* BranchPtr;
-
 
 #endif

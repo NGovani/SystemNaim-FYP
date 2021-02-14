@@ -2,7 +2,6 @@
 #define AST_BRANCH_NODES_HPP
 
 #include "ast_base_nodes.hpp"
-#include "context.hpp"
 //---------------------------------------------//
 //------------BranchNodeS---------------------//
 //        Nodes with branches in them          //
