@@ -20,6 +20,8 @@
 // Context used when compilining
 #include "context/context.hpp"
 
+// Methods & Containers for handling states
+#include "context/state.hpp"
 
 extern Node *parseAST(char* fileName);
 

@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <algorithm>
 #include <sstream>
+#include <variant>
+#include "state.hpp"
 
 struct DeclaratorContext{
     std::string id;
@@ -91,38 +93,9 @@ struct compilerContext{
     
 };
 
-enum StateType{
-    EXPRESSION,
-    FUNCTION_CALL,
-    BRANCH,
-    CONDITIONAL_BRANCH,
-};
-
-struct expressionStateInfo{};
-struct functionStateInfo{};
-struct branchStateInfo{};
-struct conditionalStateInfo{};
-
-union stateInfoStructs{
-    expressionStateInfo expr;
-    functionStateInfo func;
-    branchStateInfo branch;
-    conditionalStateInfo conditional;
-};
-
-struct stateContainer{
-    StateType type;
-    stateInfoStructs info;
-};
 
 
-class stateInfo{
-private:
-    std::string stateName;
-    stateContainer state;
-public:
-    stateInfo(std::string name, stateContainer info): state(info), stateName(name){};
-};
+
 
 // moduleContext: keeps track of variables and states for a specific module.
 class moduleContext{
