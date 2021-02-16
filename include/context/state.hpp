@@ -44,7 +44,8 @@ private:
     stateContainer state;
 public:
     stateInfo(std::string name, stateContainer info): state(info), stateName(name){};
-    std::string printVerilog();
+    std::string printVerilog(std::string nextState);
+    std::string getStateName(){return stateName;}
 };
 
 

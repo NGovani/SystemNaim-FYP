@@ -17,16 +17,27 @@ int main(int argc, char *argv[])
     
     // ast->printTree(0);
 
-    expressionStateInfo e = {
+    expressionStateInfo e1 = {
+        "b", //return
+        expressionTerm(100),
+        expressionTerm(0),
+        MOV
+    };
+    expressionStateInfo e2 = {
         "a", //return
         expressionTerm("b"),
         expressionTerm(100),
         SUB
     };
-    stateContainer x = e;
 
-    stateInfo s = stateInfo("test", x);
-    std::cout << s.printVerilog() << std::endl;
+    moduleContext m = moduleContext("main");
+    
+    m.addVariable("a");
+    m.addVariable("b");
+    
+    m.addState("test", stateContainer(e1));
+    m.addState("test", stateContainer(e2));
+    std::cout << m.printVerilog();
 
     return 0;
 }

@@ -38,21 +38,11 @@ struct LoopContext{ //needed for continue and break
 
 
 struct varData{
-    int offset;
+    bool isArray = false;
     int elements = 1;
-    int size; //used mainly for arrays but we can initlialise it for normal integers, to be used with the SizeOf command
 
-    bool isTypdef = false;
-    int type; //points to the declaration specifiers the typedef contains
-    bool isEnum = false;
-    int enumVal;
-
-    bool global = true;
-    bool isPointer = false;
-    varData(){}
-    varData(bool _typedef, int _type);
-    varData(int _enumVal, bool _isEnum, bool _global): isEnum(_isEnum), enumVal(_enumVal), global(_global){}
-    varData(int _offset, int _elements, int _size, bool _global, bool _pointer); //let declarator increment $sp
+    varData(){} //usually varData is not needed, just for arrays;
+    varData(int _elements): isArray(true), elements(_elements){}
 };
 
 struct scope{
@@ -79,34 +69,19 @@ struct funcScope{
 };  //for a function with parameters.
 
 
-struct compilerContext{
-    
-    std::vector<funcScope> functions;
-
-
-    int labelGen = 0;
-    std::string generateUniqueLabel();
-    std::string generateLabel(std::string s);
-
-    std::map<std::string, varData>* currentBindings();
-    DeclaratorContext tempDeclarator; //can be used by declarators to keep track of info needed to add to bindings.
-    
-};
-
-
-
-
-
 // moduleContext: keeps track of variables and states for a specific module.
 class moduleContext{
 private:
+    std::string moduleName;
     int stateCount;
     std::vector<stateInfo> states; //list of all states to be converted into verilog states;
     std::map<std::string, varData> variables;
 public:
-    moduleContext(): stateCount(0){}
-    std::string addState(std::string input, stateInfo stateData); //generates a state name and adds it the state list
-    void addVariable();
+    moduleContext(std::string _moduleName): stateCount(0), moduleName(_moduleName) {}
+    std::string addState(const std::string& stateName, const stateContainer& stateData); //generates a state name and adds it the state list
+    void addVariable(const std::string& varName);
+    void addVariable(const std::string& varName, int elements); //used for arrays
+    std::string printVerilog();
 };
 
 // systemContext :  contains all modules which are to be created. Allows access to 

@@ -54,72 +54,69 @@ int DeclaratorContext::totSize(){
     return size * elements;
 }
 
-//---------------------------------------------//
-//----------------Vardata_Struct---------------//
-//---------------------------------------------//
-
-varData::varData(bool _typedef, int _type): type(_type), isTypdef(_typedef){}
-
-varData::varData(int _offset, int _elements, int _size, bool _global, bool _pointer): offset(_offset), elements(_elements), size(_size), global(_global), isPointer(_pointer){}
-
-
-//---------------------------------------------//
-//----------------Scope_Struct-----------------//
-//---------------------------------------------//
-
-scope::scope(std::map<std::string, varData> _bindings, int _stackOffset): bindings(_bindings), stackOffset(_stackOffset){}
-
-void scope::addToBindings(std::string id, int offset, int elements, int size, bool global, bool pointer){
-    bindings[id] = varData(offset, elements, size, global, pointer);
-}
 
 //---------------------------------------------//
 //----------------funcScope_Struct-------------//
 //---------------------------------------------//
 
-funcScope::funcScope(std::ostream& stream, std::map<std::string, varData> _globalVars): globalVars(_globalVars){}
+//---------------------------------------------//
+//---------------- Module Context -------------//
+//---------------------------------------------//
 
-void funcScope::incScope(){
-    if(scopes.size() == 0){
-        scopes.push_back(scope(parameters, memUsed));
-        scopes.back().bindings.insert(globalVars.begin(), globalVars.end());
-        scopeLevel++;
-    }else{
-        scopes.push_back(scopes.back()); //when you enter a new scope, take the old scope bindings and put them into the new one
-        scopes.back().stackOffset = memUsed;
-        scopeLevel++;
+// addState: generates a unique label using the stateName and creates an entry
+//           in the states vector
+std::string moduleContext::addState(const std::string& stateName, const stateContainer& stateData){
+    std::string uniqueName = stateName + std::to_string(stateCount++);
+    this->states.push_back(stateInfo(uniqueName, stateData));
+    return uniqueName;
+}
+
+void moduleContext::addVariable(const std::string& varName){
+    this->variables[varName] = varData();
+}
+
+void moduleContext::addVariable(const std::string& varName, int elements){
+    this->variables[varName] = varData(elements);
+}
+
+std::string moduleContext::printVerilog(){
+    std::string r = "";
+    r += ("module " + this->moduleName + " "); // add initial module name and preamble
+    r += ("(input clk,\ninput start,\ninput resetn,\noutput reg done\n);\n\n"); //module inputs and outputs
+
+    //print standard variables
+    r += ("reg [15:0] state, state_next;\n\n");
+    //print program variables;
+    for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
+        r += ("reg [31:0] " + name + ";\n"); //TODO change to include arrays
     }
-}
+    
+    // always @ logic: update state
+    r += "\nalways @ (posedge clk) begin\n"
+    "if(!resetn)\n"
+    "state <= 16'd0;\n"
+    "else\n"
+    "state <= state_next;\n"
+    "end\n\n";
 
-void funcScope::decScope(std::ostream& stream){
-    int scopeMem = memUsed - scopes.back().stackOffset; //should give the amount of memory the scope has used
-    stream << "addiu $sp, $sp, " << scopeMem << std::endl; //positive value moves up the stack
-    memUsed -= scopeMem;
-    scopes.pop_back();
-}   
+    // state logic
+    r += "always @ (state) begin\n"
+    "case (state)\n"
+    "16'd0: begin\n"
+    "if (start)\n"
+    "state_next <= " + this->states[0].getStateName() + ";\n"
+    "end\n";
+    
+    for(std::vector<stateInfo>::iterator it = this->states.begin(); it != this->states.end(); it++){
+        if (it == (std::prev(this->states.end())))
+            r+= it->printVerilog("16'd0");
+        else{
+            ;
+            auto nx = std::next(it, 1);
+            r+= it->printVerilog(nx->getStateName());
+        }
+    }
 
-
-//---------------------------------------------//
-//----------------Compiler_Context-------------//
-//---------------------------------------------//
-
-
-std::map<std::string, varData>* compilerContext::currentBindings(){
-    return &functions.back().scopes.back().bindings;
-}
-
-std::string compilerContext::generateUniqueLabel(){
-    std::stringstream temp;
-    temp.str("label");
-    temp << labelGen;
-
-    labelGen++;
-
-    return temp.str();
-}
-
-std::string compilerContext::generateLabel(std::string s){
-    s = s + std::to_string(labelGen);
-    labelGen++;
-    return s;
+    r += "end\nendmodule\n";
+    return r;
 }
