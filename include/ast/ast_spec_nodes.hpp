@@ -26,6 +26,8 @@ class declaration : public Node{
 		if(declarator_list != NULL)declarator_list->printTree(n+1);
 	}
 
+	void convertToIL(systemContext& ctx);
+
 };
 
 // declaration_specifiers : Contains types for a variable (just int for now)
@@ -42,6 +44,7 @@ class declaration_specifiers : public Node{
 		std::cout << "Declaration Specifier: " << type_name << std::endl;
 
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("declaration_specifiers not implemented");}
 };
 
 // init_declarator: contains variable name and initial value
@@ -49,8 +52,8 @@ class init_declarator : public Node{
 	public:
 	NodePtr declaratorPtr = NULL , initialiserPtr = NULL;
 
-	init_declarator(NodePtr declarator, NodePtr initial);
-	init_declarator(NodePtr declarator);
+	init_declarator(NodePtr declarator, NodePtr initial): declaratorPtr(declarator), initialiserPtr(initial) {}
+	init_declarator(NodePtr declarator): declaratorPtr(declarator) {}
 
 	void printTree(int n) {
 		for(int i = 0; i < n; i++){
@@ -60,6 +63,7 @@ class init_declarator : public Node{
 		if(declaratorPtr != NULL){declaratorPtr->printTree(n+1);}
 		if(initialiserPtr != NULL){initialiserPtr->printTree(n+1);}
 	}
+	void convertToIL(systemContext& ctx);
 };
 
 // contains a direct_declarator, pointers not implemented
@@ -67,8 +71,8 @@ class declarator : public Node{
 	public:
 	NodePtr directDeclarator = NULL , pointerPtr = NULL;
 
-	declarator(NodePtr direct, NodePtr pointer);
-	declarator(NodePtr direct);
+	declarator(NodePtr direct, NodePtr pointer): directDeclarator(direct), pointerPtr(pointer) {}
+	declarator(NodePtr direct): directDeclarator(direct) {}
 
 	void printTree(int n) {
 		for(int i = 0; i < n; i++){
@@ -82,12 +86,14 @@ class declarator : public Node{
 		directDeclarator->printPy(context, stream);
 		pointerPtr->printPy(context, stream);
 	} 
+
+	void convertToIL(systemContext& ctx){throw std::runtime_error("declarator not implemented");}
 };
 
 // direct_declarator : Contains an identifier used for the newly defined variable
 class direct_declarator : public Node{
 	public:
-	direct_declarator(std::string s);
+	direct_declarator(std::string s): identifier(s) {}
 
 	std::string identifier;
 
@@ -97,13 +103,14 @@ class direct_declarator : public Node{
 		}
 		std::cout << "Direct Declarator: " << identifier << std::endl;
 	}
+	void convertToIL(systemContext& ctx);
 
 };
 
 // initialiser : Initial value for new variable
 class initialiser : public Node{
 	public:
-	initialiser(ExpPtr a);
+	initialiser(ExpPtr a): assignment(a) {}
 
 	ExpPtr assignment;
 	
@@ -115,6 +122,7 @@ class initialiser : public Node{
 		assignment->printTree(n);
 		std::cout << std::endl;
 	}
+	void convertToIL(systemContext& ctx);
 };
 
 
@@ -136,6 +144,7 @@ class function_definition : public Node{
 		if(name != NULL){ name->printTree(n+1);}
 		if(statement != NULL){statement->printTree(n+1);}
 	}
+	void convertToIL(systemContext& ctx);
 };
 
 class ArrayDeclaration : public Node{
@@ -158,6 +167,7 @@ class ArrayDeclaration : public Node{
 			std::cout << std::endl;
 		}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("ArrayDeclaration not implemented");}
 };
 
 class parameter_declaration : public Node{
@@ -173,6 +183,8 @@ class parameter_declaration : public Node{
 		if(specifiers != NULL){specifiers->printTree(n+1);}
 		if(dec != NULL){dec->printTree(n+1);}
 	}
+	
+	void convertToIL(systemContext& ctx);
 };
 
 class FunctionDeclaration : public Node{
@@ -189,7 +201,7 @@ class FunctionDeclaration : public Node{
 		if(argList != NULL){argList->printTree(n+1);}
 
 	}
-
+	void convertToIL(systemContext& ctx);
 };
 
 class ObjectInitialiser : public Node{
@@ -203,6 +215,7 @@ class ObjectInitialiser : public Node{
 		std::cout<< "Object Initlialiser:" << std::endl;
 		if(initList != NULL){initList->printTree(n+1);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("ObjectInitialiser not implemented");}
 	
 };
 
@@ -221,6 +234,7 @@ class typedef_declaration : public Node{
 		if(specifierList != NULL){specifierList->printTree(n+1);}
 		if(defName != NULL){defName->printTree(n+1);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("typedef_declaration not implemented");}
 
 	
 };
@@ -235,6 +249,7 @@ class TypdefSpecifier : public Node{
 		}
 		std::cout << "Typedef: " << defName << std::endl;
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("TypdefSpecifier not implemented");}
 	
 };
 

@@ -27,37 +27,7 @@ void pyContext::decScope(){
         scopeLevel--;
     }
 
-//---------------------------------------------//
-//----------------tempDecl_Struct--------------//
-//---------------------------------------------//
 
-void DeclaratorContext::purge(){
-    id.clear();
-    initliased = false;
-    int size = 0;
-    offset = 0;
-    elements = 1;
-    isArray = false;
-    initOffset = 0;
-}
-
-void DeclaratorContext::nextElement(){
-    id.clear();
-    initliased = false;
-    offset = 0;
-    elements = 1;
-    isArray = false;
-    initOffset = 0;
-}
-
-int DeclaratorContext::totSize(){
-    return size * elements;
-}
-
-
-//---------------------------------------------//
-//----------------funcScope_Struct-------------//
-//---------------------------------------------//
 
 //---------------------------------------------//
 //---------------- Module Context -------------//
@@ -98,7 +68,6 @@ std::string moduleContext::printVerilog(){
     "else\n"
     "state <= state_next;\n"
     "end\n\n";
-
     // state logic
     r += "always @ (state) begin\n"
     "case (state)\n"
@@ -119,4 +88,30 @@ std::string moduleContext::printVerilog(){
 
     r += "end\nendmodule\n";
     return r;
+}
+
+//---------------------------------------------//
+//---------------- System Context -------------//
+//---------------------------------------------//
+
+
+declaratorContext& systemContext::getDecCtx(){
+    return decCtx.back();
+}
+void systemContext::addDecCtx(){
+    decCtx.push_back(declaratorContext());
+}
+void systemContext::purgeDecCtx(){
+    decCtx.pop_back();
+}
+
+moduleContext& systemContext::getCurrentModule(){
+    return modules.back();
+}
+
+void systemContext::addModule(std::string name, std::vector<std::string> inputs){
+    if(inputs.empty())
+        modules.push_back(moduleContext(name));
+    else
+        modules.push_back(moduleContext(name, inputs));
 }

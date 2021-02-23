@@ -16,6 +16,7 @@ class compound_statement : public Node{
 		std::cout << "Compound Statement" << std::endl;
 		if(block_list != NULL) {block_list->printTree(n+1);}
 	}
+	void convertToIL(systemContext& ctx);
 
     
 };
@@ -34,6 +35,7 @@ class expression_statement: public Node{
         if(stmt != NULL){stmt->printTree(n);}
         std::cout << std::endl;
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("expression_statement not implemented");}
     
 };
 
@@ -48,6 +50,7 @@ class block_item_list : public BranchNode{
 			branches[i]->printTree(n);
 		}
 	}
+	void convertToIL(systemContext& ctx);
 };
 
 class IfStatement : public Node{
@@ -66,6 +69,7 @@ class IfStatement : public Node{
         if(_true != NULL) {_true->printTree(n+1);}
         if(_false != NULL) {_false->printTree(n+1);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("IfStatement not implemented");}
 
     
 };
@@ -84,6 +88,7 @@ class SwitchStatement : public Node{
         std::cout<< std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("SwitchStatement not implemented");}
     
 }; 
 
@@ -101,6 +106,7 @@ class WhileStatement : public Node{
         std::cout<< std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("WhileStatement not implemented");}
     
 };
 
@@ -118,6 +124,7 @@ class DoStatement : public Node{
         std::cout<< std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("DoStatement not implemented");}
 
     
 };
@@ -143,6 +150,7 @@ class ForStatement : public Node{
         std::cout<<std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("ForStatement not implemented");}
 
     
 };
@@ -159,6 +167,7 @@ class LabelStatement : public Node{
 		std::cout << "Label Statement: " << labelName << std::endl ;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("LabelStatement not implemented");}
 
 };
 
@@ -176,6 +185,7 @@ class CaseStatement : public Node{
         std::cout << std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("CaseStatement not implemented");}
     
 };
 
@@ -190,6 +200,7 @@ class DefaultStatement : public Node{
 		std::cout << "Default Statement: " << std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("DefaultStatement not implemented");}
     
 };
 
@@ -202,6 +213,7 @@ class ContinueStatement : public Node{
 		}
 		std::cout << "Continue Statement: " << std::endl;
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("ContinueStatement not implemented");}
 
     
 };
@@ -215,6 +227,7 @@ class BreakStatement : public Node{
 		}
 		std::cout << "Break Statement: " << std::endl;
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("BreakStatement not implemented");}
     
 };
 
@@ -231,6 +244,7 @@ class ReturnStatement : public Node{
         if(expr != NULL){expr->printTree(n);}
         std::cout<<std::endl;
     }
+	void convertToIL(systemContext& ctx);
 
     
 };

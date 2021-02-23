@@ -9,17 +9,24 @@ int main(int argc, char* argv[]){
     }
 
     //create AST
-    Node* ast = parseAST(argv[2]);
-
+    Node* ast = parseAST(argv[1]);
     //create context and ostream
-    static compilerContext comCtx;
-    std::ostream* os = &std::cout;
-    std::ofstream stream;
-    stream.open(argv[4]);
-    os = &stream;
+    static systemContext sysCtx;
+    // std::ostream* os = &std::cout;
+    // std::ofstream stream;
     
     //run print mips
-    ast->printMips(comCtx, *os);
-    stream.close();
+    try
+    {
+        ast->convertToIL(sysCtx);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+
+    std::cout << sysCtx.getCurrentModule().printVerilog() << std::endl;
+
+    // stream.close();
     return 0;
 }

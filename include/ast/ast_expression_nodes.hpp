@@ -13,7 +13,7 @@ class primary_expression : public ExpressionNode{
 	void printTree(int n) {
 		std::cout << identifier;
 	}
-	
+	void convertToIL(systemContext& ctx);
 };
 
 class constantNode : public ExpressionNode{
@@ -23,6 +23,7 @@ class constantNode : public ExpressionNode{
 	void printTree(int n) {
 		std::cout << init;
 	}
+	void convertToIL(systemContext& ctx);
 	
 
 	int eval();
@@ -35,6 +36,7 @@ class stringNode : public ExpressionNode{
 	void printTree(int n) {
 		std::cout << init;
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("stringNode not implemented");}
 };
 
 class assignment_expression : public ExpressionNode{
@@ -47,6 +49,7 @@ class assignment_expression : public ExpressionNode{
 		std::cout<< " " << op << " " ;
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("assignment_expression not implemented");}
 	
 };	
 
@@ -61,6 +64,7 @@ class conditional_expression: public ExpressionNode{
 		std::cout << " : ";
 		if(FalseExp != NULL){FalseExp->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("conditional_expression not implemented");}
 	
 
 	int eval();
@@ -75,6 +79,7 @@ class LogicalOrOp: public ExpressionNode{
 		std::cout << " || ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("LogicalOrOp not implemented");}
 	
 
 	int eval();
@@ -90,6 +95,7 @@ class LogicalAndOp: public ExpressionNode{
 		std::cout << " && ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("LogicalAndOp not implemented");}
 	
 
 	int eval();
@@ -104,6 +110,7 @@ class InclusiveOrOp: public ExpressionNode{
 		std::cout << " | ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("InclusiveOrOp not implemented");}
 	
 	int eval();
 };
@@ -117,6 +124,7 @@ class ExclusiveOrOp: public ExpressionNode{
 		std::cout << " ^ ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("ExclusiveOrOp not implemented");}
 	
 	int eval();
 };
@@ -130,6 +138,7 @@ class AndOp: public ExpressionNode{
 		std::cout << " & ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("AndOp not implemented");}
 	
 	int eval();
 };
@@ -143,6 +152,7 @@ class EqualOp: public ExpressionNode{
 		std::cout << " == ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("EqualOp not implemented");}
 	
 	int eval();
 };
@@ -156,6 +166,7 @@ class NotEqualOp: public ExpressionNode{
 		std::cout << " != ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("NotEqualOp not implemented");}
 	
 	int eval();
 };
@@ -169,6 +180,7 @@ class GreaterThanOp: public ExpressionNode{
 		std::cout << " > ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("GreaterThanOp not implemented");}
 	
 	int eval();
 };
@@ -182,6 +194,7 @@ class LessThanOp: public ExpressionNode{
 		std::cout << " < ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("LessThanOp not implemented");}
 	
 	int eval();
 };
@@ -195,6 +208,7 @@ class LessThanEqOp: public ExpressionNode{
 		std::cout << " <= ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("LessThanEqOp not implemented");}
 	
 	int eval();
 };
@@ -208,6 +222,7 @@ class GreaterThanEqOp: public ExpressionNode{
 		std::cout << " >= ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("GreaterThanEqOp not implemented");}
 	
 	int eval();
 };
@@ -221,6 +236,7 @@ class LeftShiftOp: public ExpressionNode{
 		std::cout << " << ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("LeftShiftOp not implemented");}
 	
 	int eval();
 };
@@ -234,6 +250,7 @@ class RightShiftOp: public ExpressionNode{
 		std::cout << " >> ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("RightShiftOp not implemented");}
 	
 	int eval();
 };
@@ -247,6 +264,7 @@ class AddOp: public ExpressionNode{
 		std::cout << " + ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("AddOp not implemented");}
 	
 	int eval();
 };
@@ -260,6 +278,7 @@ class SubOp: public ExpressionNode{
 		std::cout << " - ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("SubOp not implemented");}
 	
 	int eval();
 };
@@ -273,6 +292,7 @@ class MultOp: public ExpressionNode{
 		std::cout << " * ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("MultOp not implemented");}
 	
 	int eval();
 };
@@ -286,6 +306,7 @@ class DivOp: public ExpressionNode{
 		std::cout << " / ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("DivOp not implemented");}
 	
 	int eval();
 };
@@ -299,6 +320,7 @@ class  ModulusOp: public ExpressionNode{
 		std::cout << " % ";
 		if(right != NULL){right->printTree(n);}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("ModulusOp not implemented");}
 	
 	int eval();
 };
@@ -314,6 +336,7 @@ class cast_expression: public ExpressionNode{
         std::cout << " ) ";
         if(right != NULL){right->printTree(n);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("cast_expression not implemented");}
 };
 
 class PreIncOp: public ExpressionNode{
@@ -324,6 +347,7 @@ class PreIncOp: public ExpressionNode{
         std::cout << "++";
         if(expr != NULL){expr->printTree(n);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("PreIncOp not implemented");}
 	
 };
 
@@ -335,6 +359,7 @@ class PreDecOp: public ExpressionNode{
         std::cout << "--";
         if(expr != NULL){expr->printTree(n);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("PreDecOp not implemented");}
 	
 };
 
@@ -346,6 +371,7 @@ class PostIncOp: public ExpressionNode{
         if(expr != NULL){expr->printTree(n);}
         std::cout << "++";
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("PostIncOp not implemented");}
 	
 };
 
@@ -357,6 +383,7 @@ class PostDecOp: public ExpressionNode{
         if(expr != NULL){expr->printTree(n);}
         std::cout << "--";    
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("PostDecOp not implemented");}
 	
 };
 
@@ -367,6 +394,7 @@ class RefOp: public ExpressionNode{
 	void printTree(int n){
         if(expr != NULL){std::cout<< "&" ;expr->printTree(n);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("RefOp not implemented");}
 	
 };
 //do we need this?
@@ -378,6 +406,7 @@ class PtrOp: public ExpressionNode{
 	void printTree(int n){
         if(expr != NULL){std::cout<< "->" ;expr->printTree(n);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("PtrOp not implemented");}
 	
 };
 //do we need this?
@@ -389,6 +418,7 @@ class UAddOp: public ExpressionNode{
 	void printTree(int n){
         if(expr != NULL){std::cout<< "+" ;expr->printTree(n);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("UAddOp not implemented");}
 	
 
 	int eval();
@@ -401,6 +431,7 @@ class USubOp: public ExpressionNode{
 	void printTree(int n){
         if(expr != NULL){std::cout<< "-" ;expr->printTree(n);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("USubOp not implemented");}
 	
 
 	int eval();
@@ -413,6 +444,7 @@ class BitwiseNotOp: public ExpressionNode{
 	void printTree(int n){
         if(expr != NULL){std::cout<< "~" ;expr->printTree(n);}
     }	
+	void convertToIL(systemContext& ctx){throw std::runtime_error("BitwiseNotOp not implemented");}
 	
 
 	int eval();
@@ -425,6 +457,7 @@ class LogicalNotOp: public ExpressionNode{
 	void printTree(int n){
         if(expr != NULL){std::cout<< "!" ;expr->printTree(n);}
     }	
+	void convertToIL(systemContext& ctx){throw std::runtime_error("LogicalNotOp not implemented");}
 	
 
 	int eval();
@@ -442,6 +475,7 @@ class SizeOf: public ExpressionNode{
         if(expr != NULL){decList->printTree(n);}
 		if(expr != NULL){expr->printTree(n);}
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("SizeOf not implemented");}
 };
 
 class array_call: public ExpressionNode{ //TODO
@@ -454,6 +488,7 @@ class array_call: public ExpressionNode{ //TODO
 		if(idx != NULL){idx->printTree(n);}
 		std::cout << "]" ;
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("array_call not implemented");}
 
 	
 };
@@ -470,6 +505,7 @@ class function_call: public ExpressionNode{
         if(list != NULL){list->printTree(n);}
 		std::cout << " }";
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("function_call not implemented");}
 	
 };
 
@@ -482,6 +518,7 @@ class DotMemberOp : public ExpressionNode{
         if(obj != NULL){obj->printTree(n);}
         std::cout << "." << member;
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("DotMemberOp not implemented");}
 };
 
 class PtrMemberOp : public ExpressionNode{
@@ -493,6 +530,7 @@ class PtrMemberOp : public ExpressionNode{
         if(obj != NULL){obj->printTree(n);}
         std::cout << "->" << member;
     }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("PtrMemberOp not implemented");}
 };
 
 

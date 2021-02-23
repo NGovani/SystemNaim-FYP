@@ -3,40 +3,16 @@
 
 //primary_expression
 
-// void primary_expression::printMips(compilerContext& ctx, std::ostream& stream){
-//     if(ctx.funcCall){
-//         stream << "jal " << identifier << std::endl;
-//     }else if(!((*ctx.currentBindings())[identifier].global)){
-//         if(ctx.getAddr){
-//             int retrieveVariable = ctx.currentFunc()->memUsed - (*ctx.currentBindings())[identifier].offset;
-//             stream << "addi $2, $sp, " << retrieveVariable << std::endl;
-//         }else if((*ctx.currentBindings())[identifier].isEnum){
-//             stream << "addi $2, $0, " << ((*ctx.currentBindings())[identifier].enumVal) << std::endl;
-//         }else{
-//             int retrieveVariable = ctx.currentFunc()->memUsed - (*ctx.currentBindings())[identifier].offset;
-//             stream << "lw $2," << retrieveVariable << "($sp)" << std::endl;
-//         }
-//         ctx.ptrCheck = (*ctx.currentBindings())[identifier].isPointer;
-//         if(((*ctx.currentBindings())[identifier].elements != 1) && (!ctx.arrayCall)){ctx.ptrCheck = true;}
-//     }
-//     else{
-//         if(ctx.getAddr || ctx.arrayCall){
-//             stream << "lui $2, %hi(" << identifier << ")" << std::endl;
-//             stream << "addi $2, $2, %lo(" << identifier << ")" << std::endl;
-//         }
-//         else{
-//             stream << "lui $2, %hi(" << identifier << ")" << std::endl;
-//             stream << "lw $2, %lo(" << identifier << ")($2) \nnop" << std::endl;
-//         }
-//     }
-// }
+void primary_expression::convertToIL(systemContext& ctx){
+    ctx.getExprState().op1 = expressionTerm(identifier);
+}
 
+//constantNode
 
-// //constantNode
+void constantNode::convertToIL(systemContext& ctx){
+    ctx.getExprState().op1 = expressionTerm(int(this->init));
+}
 
-// void constantNode::printMips(compilerContext& ctx, std::ostream& stream){
-//     stream << "addiu $2,$0," << floor(init) << std::endl;
-// }
 
 int constantNode::eval(){
     return init;

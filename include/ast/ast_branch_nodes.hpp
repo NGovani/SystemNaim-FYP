@@ -22,6 +22,9 @@ class translation_unit : public BranchNode{
 		}
 	}
 	~translation_unit() {}
+
+	void convertToIL(systemContext& ctx);
+
 };
 
 // declaration_specifier_list : Holds LHS of variable declarations. 
@@ -41,6 +44,7 @@ class declaration_specifier_list : public BranchNode{
 			branches[i]->printTree(n);
 		}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("declaration_specifier_list not implemented");}
 	
 };
 
@@ -49,7 +53,7 @@ class declaration_specifier_list : public BranchNode{
 // Always comes with a declaration_specifier_list node
 class init_declarator_list : public BranchNode{
 	public:
-	init_declarator_list(NodePtr p); //branches contain init_declarator nodes
+	init_declarator_list(NodePtr p){branches.push_back(p);} //branches contain init_declarator nodes
 
 	void printTree(int n) {
 		/*for(int i = 0; i < n; i++){
@@ -60,6 +64,7 @@ class init_declarator_list : public BranchNode{
 			branches[i]->printTree(n);
 		}
 	}
+	void convertToIL(systemContext& ctx);
 	~init_declarator_list() {}
 };
 
@@ -78,10 +83,11 @@ class argument_expression_list : public BranchNode{
 		}
 		std::cout << "]";
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("argument_expression_list not implemented");}
 };
 
 
-// Fuck knows
+// function arguments
 class parameter_list : public BranchNode{
 	public:
 	parameter_list(NodePtr p){branches.push_back(p);}
@@ -94,6 +100,7 @@ class parameter_list : public BranchNode{
 			branches[i]->printTree(n+1);
 		}
 	}
+	void convertToIL(systemContext& ctx);
 };
 
 // identifier_list: list of variable
@@ -113,6 +120,7 @@ class identifier_list : public Node{
 		}
 		std::cout << std::endl;
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("identifier_list not implemented");}
 
 	
 };
@@ -126,6 +134,7 @@ class initialiser_list : public BranchNode{
 			branches[i]->printTree(n);
 		}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("initialiser_list not implemented");}
 };
 
 //--- NODES BELOW ARE NOT USED ---//
@@ -160,6 +169,7 @@ class declaration_list : public BranchNode{
 			branches[i]->printTree(n);
 		}
 	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("declaration_list not implemented");}
 };
 
 class enumerator_list : public BranchNode{

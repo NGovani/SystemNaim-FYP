@@ -1,18 +1,15 @@
 #include "ast_statement_nodes.hpp"
 
-// //Compound Statement
-// void compound_statement::printMips(compilerContext& ctx, std::ostream& stream){
-//     ctx.currentFunc()->incScope();
-//     if(block_list != NULL){block_list->printMips(ctx, stream);}
-//     ctx.currentFunc()->decScope(stream);
-// }
+//Compound Statement
+void compound_statement::convertToIL(systemContext& ctx){
+    this->block_list->convertToIL(ctx);
+}
 
-// //Block Item List
-// void block_item_list::printMips(compilerContext& ctx, std::ostream& stream){
-//     for(int i = 0; i < (int)branches.size(); i++){
-// 		branches[i]->printMips(ctx, stream);
-// 	}
-// }
+void block_item_list::convertToIL(systemContext& ctx){
+    for(const auto& item : this->branches){
+        item->convertToIL(ctx);
+    }
+}
 
 
 // //IfStatement
@@ -96,11 +93,18 @@
 // }
 
 
-// //ReturnStatement
-// void ReturnStatement::printMips(compilerContext& ctx, std::ostream& stream){
-//     if(expr != NULL){expr->printMips(ctx, stream);}
-//     ctx.endFunc(stream);
-// }
+//ReturnStatement
+
+void ReturnStatement::convertToIL(systemContext& ctx){
+    expressionStateInfo initState; //holds info to initialise variable
+    initState.r = "output";
+    initState.cmd = ExpressionOperator::MOV;
+    ctx.getExprState() = initState;
+    this->expr->convertToIL(ctx);
+    // grab the expression state from the context and add it to the modules states
+    ctx.getCurrentModule().addState("return", stateContainer(ctx.getExprState()));
+    ctx.purgeExprState();
+}
 
 // void ContinueStatement::printMips(compilerContext& ctx, std::ostream& stream){
 //     std::vector<LoopContext>::reverse_iterator rit = ctx.currentFunc()->LoopsLabels.rbegin();

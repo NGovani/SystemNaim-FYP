@@ -33,7 +33,8 @@ class Node{
 		virtual void tabprint(int scope, std::ostream& stream){
 			for(int i = 0; i < scope; i++){stream << "\t";}
 		}
-		//virtual void printMips(compilerContext& ctx, std::ostream& stream){} //TODO - Implement this
+
+		virtual void convertToIL(systemContext& ctx){}
 };
 typedef Node* NodePtr;
 
