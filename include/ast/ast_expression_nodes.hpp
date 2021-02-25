@@ -236,7 +236,7 @@ class LeftShiftOp: public ExpressionNode{
 		std::cout << " << ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("LeftShiftOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
@@ -250,7 +250,7 @@ class RightShiftOp: public ExpressionNode{
 		std::cout << " >> ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("RightShiftOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
@@ -278,7 +278,7 @@ class SubOp: public ExpressionNode{
 		std::cout << " - ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("SubOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
@@ -292,7 +292,7 @@ class MultOp: public ExpressionNode{
 		std::cout << " * ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("MultOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
@@ -306,7 +306,7 @@ class DivOp: public ExpressionNode{
 		std::cout << " / ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("DivOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };

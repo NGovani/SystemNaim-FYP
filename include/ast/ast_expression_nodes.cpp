@@ -55,13 +55,48 @@ int constantNode::eval(){
     return init;
 }
 
-// AddOp
+// add operator
 
 void AddOp::convertToIL(systemContext& ctx){
     ctx.getExprState().cmd = ExpressionOperator::ADD;
     //reference to return state can get stale so need to constantly grab it after each update
     ctx.getExprState() = checkChildExpr("addChildLeft", "addLeft", this->left, ctx, true);
     ctx.getExprState() = checkChildExpr("addChildRight", "addRight", this->right, ctx, false);
+}
+
+void SubOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::SUB;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("subChildLeft", "subLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("subChildRight", "subRight", this->right, ctx, false);
+}
+
+void MultOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::MUL;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("mulChildLeft", "mulLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("mulChildRight", "mulRight", this->right, ctx, false);
+}
+
+void DivOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::DIV;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("divChildLeft", "divLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("divChildRight", "divRight", this->right, ctx, false);
+}
+
+void LeftShiftOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::LS;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("leftShiftChildLeft", "leftShiftLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("leftShiftChildRight", "leftShiftRight", this->right, ctx, false);
+}
+
+void RightShiftOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::RS;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("rightShiftChildLeft", "rightShiftLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("rightShiftChildRight", "rightShiftRight", this->right, ctx, false);
 }
 
 //assignment_expression

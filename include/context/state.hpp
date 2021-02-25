@@ -29,6 +29,7 @@ struct expressionStateInfo{
     expressionTerm op1;
     expressionTerm op2;
     ExpressionOperator cmd; // command type
+    bool returnState = false; // true if this state should end function operation
 };
 
 
