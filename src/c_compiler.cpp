@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     {
         std::cerr << e.what() << std::endl;
     }
-
+    std::cout << "here" << std::endl;
     std::cout << sysCtx.getCurrentModule().printVerilog() << std::endl;
 
     // stream.close();

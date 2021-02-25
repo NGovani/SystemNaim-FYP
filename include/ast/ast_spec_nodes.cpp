@@ -42,8 +42,7 @@ void direct_declarator::convertToIL(systemContext& ctx){
 void initialiser::convertToIL(systemContext& ctx){
     expressionStateInfo initState; //holds info to initialise variable
     initState.r = ctx.getDecCtx().id;
-    initState.cmd = ExpressionOperator::MOV;
-    ctx.getExprState() = initState;
+    ctx.addExprState(initState);
     this->assignment->convertToIL(ctx);
     // grab the expression state from the context and add it to the modules states
     ctx.getCurrentModule().addState("init_var", stateContainer(ctx.getExprState()));

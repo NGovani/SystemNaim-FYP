@@ -70,13 +70,15 @@ private:
     std::vector<stateInfo> states; //list of all states to be converted into verilog states;
     std::map<std::string, varData> variables;
     std::vector<std::string> inputs; //max 2 input variables
+    int varCount;
 public:
-    moduleContext(std::string _moduleName): stateCount(0), moduleName(_moduleName) {}
-    moduleContext(std::string _moduleName, std::vector<std::string> _inputs): stateCount(0), moduleName(_moduleName), inputs(_inputs) {}
+    moduleContext(std::string _moduleName): stateCount(0), varCount(0), moduleName(_moduleName) {}
+    moduleContext(std::string _moduleName, std::vector<std::string> _inputs): stateCount(0), varCount(0), moduleName(_moduleName), inputs(_inputs) {}
     std::string addState(const std::string& stateName, const stateContainer& stateData); //generates a state name and adds it the state list
     void addVariable(const std::string& varName);
     void addVariable(const std::string& varName, int elements); //used for arrays
     std::string printVerilog();
+    std::string genTmpVar(const std::string& varName);
 };
 
 // systemContext :  contains all modules which are to be created, aswell as structs to hold data
@@ -85,10 +87,11 @@ class systemContext {
 private:
     std::vector<moduleContext> modules; // Map where key = module name: val = module context
     std::vector<declaratorContext> decCtx; // holds data for declarations
-    expressionStateInfo exprState; //used to create expression states across nodes. might be worth turning into a vector
+    std::vector<expressionStateInfo> exprStates; //used to create expression states across nodes. might be worth turning into a vector
 public:
-    expressionStateInfo& getExprState() {return exprState;}
-    void purgeExprState(){this->exprState = expressionStateInfo();}
+    expressionStateInfo& getExprState();
+    void addExprState(expressionStateInfo e);
+    void purgeExprState();
     declaratorContext& getDecCtx(); // get current declarator context
     void addDecCtx(); // add new element to decCtx vector
     void purgeDecCtx(); // remove last element from decCtx vector.

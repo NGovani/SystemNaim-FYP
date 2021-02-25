@@ -1,16 +1,53 @@
 #include "ast_expression_nodes.hpp"
 
 
+// checks if a child expr pointer needs a new state or can simply be added to the return state
+// operand == true for left operand, false for right operand
+expressionStateInfo checkChildExpr(const std::string & stateName, const std::string & varName, ExpPtr child, systemContext& ctx, bool operand){
+    expressionStateInfo returnState = ctx.getExprState();
+    expressionStateInfo childState;
+    childState.r = ctx.getCurrentModule().genTmpVar(varName);
+    if(child == NULL) throw std::runtime_error("child pointer empty");
+    ctx.addExprState(childState);
+    child->convertToIL(ctx);
+    expressionStateInfo& newChildState = ctx.getExprState();
+    if(newChildState.cmd == ExpressionOperator::MOV){
+        // if it was only a constant or primary expression then assign it straight to one of the operators
+        if(operand){
+            returnState.op1 = newChildState.op1;
+        }
+        else
+            returnState.op2 = newChildState.op1;
+    } else{
+        // if the child node is an expression, then assign the operand to the return and add a state
+        if(operand)
+            returnState.op1 = newChildState.r;
+        else
+            returnState.op2 = newChildState.r;
+        ctx.getCurrentModule().addState(stateName, stateContainer(newChildState));
+        ctx.getCurrentModule().addVariable(newChildState.r);
+    }
+    ctx.purgeExprState();
+
+    return returnState;
+}
+
+
+
 //primary_expression
 
 void primary_expression::convertToIL(systemContext& ctx){
-    ctx.getExprState().op1 = expressionTerm(identifier);
+    expressionStateInfo& e = ctx.getExprState();
+    e.op1 = expressionTerm(identifier);
+    e.cmd = ExpressionOperator::MOV;
 }
 
 //constantNode
 
 void constantNode::convertToIL(systemContext& ctx){
-    ctx.getExprState().op1 = expressionTerm(int(this->init));
+    expressionStateInfo& e = ctx.getExprState();
+    e.op1 = expressionTerm(int(this->init));
+    e.cmd = ExpressionOperator::MOV;
 }
 
 
@@ -18,6 +55,14 @@ int constantNode::eval(){
     return init;
 }
 
+// AddOp
+
+void AddOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::ADD;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("addChildLeft", "addLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("addChildRight", "addRight", this->right, ctx, false);
+}
 
 //assignment_expression
 

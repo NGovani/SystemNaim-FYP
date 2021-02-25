@@ -41,6 +41,10 @@ std::string moduleContext::addState(const std::string& stateName, const stateCon
     return uniqueName;
 }
 
+std::string moduleContext::genTmpVar(const std::string& varName){
+    return varName + std::to_string(this->varCount++);
+}
+
 void moduleContext::addVariable(const std::string& varName){
     this->variables[varName] = varData();
 }
@@ -52,7 +56,11 @@ void moduleContext::addVariable(const std::string& varName, int elements){
 std::string moduleContext::printVerilog(){
     std::string r = "";
     r += ("module " + this->moduleName + " "); // add initial module name and preamble
-    r += ("(input clk,\ninput start,\ninput resetn,\noutput reg done\n);\n\n"); //module inputs and outputs
+    r += ("(input clk,\ninput start,\ninput resetn,");
+    for(auto const& name : this->inputs){ // Might wanna also add var_next to be more safe
+        r += ("\ninput [31:0] " + name + ","); //TODO change to include arrays
+    }
+    r += ("\noutput reg done,\noutput reg [31:0] d_out\n);\n\n"); //module inputs and outputs
 
     //print standard variables
     r += ("reg [15:0] state, state_next;\n\n");
@@ -60,6 +68,7 @@ std::string moduleContext::printVerilog(){
     for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
         r += ("reg [31:0] " + name + ";\n"); //TODO change to include arrays
     }
+    r += "reg [31:0] d_out;\n"; //output reg for returns
     
     // always @ logic: update state
     r += "\nalways @ (posedge clk) begin\n"
@@ -96,6 +105,7 @@ std::string moduleContext::printVerilog(){
 
 
 declaratorContext& systemContext::getDecCtx(){
+    if(decCtx.empty()) throw std::runtime_error("DecCtx Empty");
     return decCtx.back();
 }
 void systemContext::addDecCtx(){
@@ -103,6 +113,19 @@ void systemContext::addDecCtx(){
 }
 void systemContext::purgeDecCtx(){
     decCtx.pop_back();
+}
+
+expressionStateInfo& systemContext::getExprState(){
+    if(this->exprStates.empty()) throw std::runtime_error("exprStates Empty");
+    return this->exprStates.back();
+}
+
+void systemContext::addExprState(expressionStateInfo e){
+    this->exprStates.push_back(e);
+}
+
+void systemContext::purgeExprState(){
+    this->exprStates.pop_back();
 }
 
 moduleContext& systemContext::getCurrentModule(){

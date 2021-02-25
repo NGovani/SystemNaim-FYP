@@ -96,10 +96,9 @@ void block_item_list::convertToIL(systemContext& ctx){
 //ReturnStatement
 
 void ReturnStatement::convertToIL(systemContext& ctx){
-    expressionStateInfo initState; //holds info to initialise variable
-    initState.r = "output";
-    initState.cmd = ExpressionOperator::MOV;
-    ctx.getExprState() = initState;
+    expressionStateInfo returnValState; //holds info to initialise variable
+    returnValState.r = "d_out";
+    ctx.addExprState(returnValState);
     this->expr->convertToIL(ctx);
     // grab the expression state from the context and add it to the modules states
     ctx.getCurrentModule().addState("return", stateContainer(ctx.getExprState()));

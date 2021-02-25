@@ -2,3 +2,7 @@
 src/c_parser.output
 bin/eval_expr
 test.c
+bin/c_compiler
+src/c_lexer.yy.cpp
+src/c_parser.tab.cpp
+src/c_parser.tab.hpp

@@ -264,7 +264,7 @@ class AddOp: public ExpressionNode{
 		std::cout << " + ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("AddOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
