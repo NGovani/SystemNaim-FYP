@@ -1,4 +1,5 @@
 #include "ast_expression_nodes.hpp"
+#include "../functional.hpp"
 
 
 // checks if a child expr pointer needs a new state or can simply be added to the return state
@@ -97,6 +98,26 @@ void RightShiftOp::convertToIL(systemContext& ctx){
     //reference to return state can get stale so need to constantly grab it after each update
     ctx.getExprState() = checkChildExpr("rightShiftChildLeft", "rightShiftLeft", this->left, ctx, true);
     ctx.getExprState() = checkChildExpr("rightShiftChildRight", "rightShiftRight", this->right, ctx, false);
+}
+
+void assignment_expression::convertToIL(systemContext& ctx){
+    //TODO: add different types of assignments
+    expressionStateInfo returnVal; //used to find the return value of the assignment
+    expressionStateInfo assignmentState;
+    ctx.addExprState(returnVal);
+    if(this->left == NULL) throw std::runtime_error("left pointer empty");
+    this->left->convertToIL(ctx);
+    std::visit(functional::overload{
+        [&](std::string& x) {assignmentState.r = x;},
+        [&](int& x) {throw std::runtime_error("Unexpected constant on LHS of assignment");}
+    }, ctx.getExprState().op1);
+
+    ctx.addExprState(assignmentState);
+    if(this->right == NULL) throw std::runtime_error("right pointer empty");
+    this->right->convertToIL(ctx);
+    ctx.getCurrentModule().addState("assignment", stateContainer(ctx.getExprState()));
+    ctx.purgeExprState();
+    
 }
 
 //assignment_expression

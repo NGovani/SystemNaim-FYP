@@ -49,7 +49,7 @@ class assignment_expression : public ExpressionNode{
 		std::cout<< " " << op << " " ;
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("assignment_expression not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 };	
 

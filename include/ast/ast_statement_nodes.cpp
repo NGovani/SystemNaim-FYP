@@ -106,6 +106,14 @@ void ReturnStatement::convertToIL(systemContext& ctx){
     ctx.purgeExprState();
 }
 
+
+// Expressions Statement
+
+void expression_statement::convertToIL(systemContext& ctx){
+    if(this->stmt != NULL)
+        this->stmt->convertToIL(ctx);
+}
+
 // void ContinueStatement::printMips(compilerContext& ctx, std::ostream& stream){
 //     std::vector<LoopContext>::reverse_iterator rit = ctx.currentFunc()->LoopsLabels.rbegin();
 //     for(;(*rit).cont.empty();++rit){}  

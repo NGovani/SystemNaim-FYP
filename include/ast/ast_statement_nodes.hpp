@@ -35,7 +35,7 @@ class expression_statement: public Node{
         if(stmt != NULL){stmt->printTree(n);}
         std::cout << std::endl;
     }
-	void convertToIL(systemContext& ctx){throw std::runtime_error("expression_statement not implemented");}
+	void convertToIL(systemContext& ctx);
     
 };
 
