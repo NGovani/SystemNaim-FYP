@@ -19,6 +19,12 @@ enum ExpressionOperator{
     DIV,
     LS, //left shift
     RS, //right shift
+    EQ,
+    NEQ,
+    GT,
+    GTE,
+    LT,
+    LTE,
     MOV // takes a single argument assigns value
 };
 
@@ -30,14 +36,26 @@ struct expressionStateInfo{
     expressionTerm op2;
     ExpressionOperator cmd; // command type
     bool returnState = false; // true if this state should end function operation
+
+    std::string nxtState; // used if this state needs to go to another state after its complete
 };
 
 
 struct functionStateInfo{};
-struct branchStateInfo{};
-struct conditionalStateInfo{};
+struct branchStateInfo{
+    std::string condVar; //If this has a value then this is a conditional branch
+    std::string jumpLabel; // label to jump to, if no condition this is auto taken
 
-using stateContainer = std::variant<expressionStateInfo, functionStateInfo, branchStateInfo, conditionalStateInfo>;
+    std::string nxtState; // used if this state needs to go to another state after its complete
+};
+struct conditionalStateInfo{
+
+};
+
+struct temporaryStateInfo{  // Empty state, used as a placeholder for states which need to jump to something after their operation is over
+    std::vector<std::string> jumpToHere; //list of states which jump to this state
+};
+using stateContainer = std::variant<expressionStateInfo, functionStateInfo, branchStateInfo, conditionalStateInfo, temporaryStateInfo>;
 
 class stateInfo{
 private:
@@ -47,6 +65,8 @@ public:
     stateInfo(std::string name, stateContainer info): state(info), stateName(name){};
     std::string printVerilog(std::string nextState);
     std::string getStateName(){return stateName;}
+    stateContainer& getState(){return state;}
+    bool operator== (std::string _stateName);
 };
 
 

@@ -100,6 +100,49 @@ void RightShiftOp::convertToIL(systemContext& ctx){
     ctx.getExprState() = checkChildExpr("rightShiftChildRight", "rightShiftRight", this->right, ctx, false);
 }
 
+void EqualOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::EQ;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("rightShiftChildLeft", "rightShiftLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("rightShiftChildRight", "rightShiftRight", this->right, ctx, false);
+}
+
+void NotEqualOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::NEQ;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("rightShiftChildLeft", "rightShiftLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("rightShiftChildRight", "rightShiftRight", this->right, ctx, false);
+}
+
+void GreaterThanOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::GT;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("rightShiftChildLeft", "rightShiftLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("rightShiftChildRight", "rightShiftRight", this->right, ctx, false);
+}
+
+void GreaterThanEqOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::GTE;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("rightShiftChildLeft", "rightShiftLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("rightShiftChildRight", "rightShiftRight", this->right, ctx, false);
+}
+
+void LessThanOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::LT;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("rightShiftChildLeft", "rightShiftLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("rightShiftChildRight", "rightShiftRight", this->right, ctx, false);
+}
+
+void LessThanEqOp::convertToIL(systemContext& ctx){
+    ctx.getExprState().cmd = ExpressionOperator::LTE;
+    //reference to return state can get stale so need to constantly grab it after each update
+    ctx.getExprState() = checkChildExpr("rightShiftChildLeft", "rightShiftLeft", this->left, ctx, true);
+    ctx.getExprState() = checkChildExpr("rightShiftChildRight", "rightShiftRight", this->right, ctx, false);
+}
+
+
 void assignment_expression::convertToIL(systemContext& ctx){
     //TODO: add different types of assignments
     expressionStateInfo returnVal; //used to find the return value of the assignment
@@ -111,6 +154,7 @@ void assignment_expression::convertToIL(systemContext& ctx){
         [&](std::string& x) {assignmentState.r = x;},
         [&](int& x) {throw std::runtime_error("Unexpected constant on LHS of assignment");}
     }, ctx.getExprState().op1);
+    ctx.purgeExprState();
 
     ctx.addExprState(assignmentState);
     if(this->right == NULL) throw std::runtime_error("right pointer empty");

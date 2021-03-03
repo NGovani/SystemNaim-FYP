@@ -152,7 +152,7 @@ class EqualOp: public ExpressionNode{
 		std::cout << " == ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("EqualOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
@@ -166,7 +166,7 @@ class NotEqualOp: public ExpressionNode{
 		std::cout << " != ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("NotEqualOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
@@ -180,7 +180,7 @@ class GreaterThanOp: public ExpressionNode{
 		std::cout << " > ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("GreaterThanOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
@@ -194,7 +194,7 @@ class LessThanOp: public ExpressionNode{
 		std::cout << " < ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("LessThanOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
@@ -208,7 +208,7 @@ class LessThanEqOp: public ExpressionNode{
 		std::cout << " <= ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("LessThanEqOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };
@@ -222,7 +222,7 @@ class GreaterThanEqOp: public ExpressionNode{
 		std::cout << " >= ";
 		if(right != NULL){right->printTree(n);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("GreaterThanEqOp not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 	int eval();
 };

@@ -71,21 +71,26 @@ private:
     std::map<std::string, varData> variables;
     std::vector<std::string> inputs; //max 2 input variables
     int varCount;
+    void handleTempState(const std::string& stateName, const stateContainer& stateData);
 public:
     moduleContext(std::string _moduleName): stateCount(0), varCount(0), moduleName(_moduleName) {}
     moduleContext(std::string _moduleName, std::vector<std::string> _inputs): stateCount(0), varCount(0), moduleName(_moduleName), inputs(_inputs) {}
-    std::string addState(const std::string& stateName, const stateContainer& stateData); //generates a state name and adds it the state list
+    std::string addState(const std::string& stateName, const stateContainer& stateData); //generates a state name and adds it the state list, return index of state
+    void addNamedState(const std::string& stateName, const stateContainer& stateData); // does not generate a state name, assume label has already been generated, return index of state
     void addVariable(const std::string& varName);
     void addVariable(const std::string& varName, int elements); //used for arrays
     std::string printVerilog();
+    std::string genStateName(const std::string& stateName);
     std::string genTmpVar(const std::string& varName);
+    stateInfo& findState(std::string stateName);
+    std::string lastStateName();
 };
 
 // systemContext :  contains all modules which are to be created, aswell as structs to hold data
 //                  between nodes
 class systemContext {
 private:
-    std::vector<moduleContext> modules; // Map where key = module name: val = module context
+    std::vector<moduleContext> modules; // holds all module data, including the states they have
     std::vector<declaratorContext> decCtx; // holds data for declarations
     std::vector<expressionStateInfo> exprStates; //used to create expression states across nodes. might be worth turning into a vector
 public:

@@ -69,7 +69,7 @@ class IfStatement : public Node{
         if(_true != NULL) {_true->printTree(n+1);}
         if(_false != NULL) {_false->printTree(n+1);}
 	}
-	void convertToIL(systemContext& ctx){throw std::runtime_error("IfStatement not implemented");}
+	void convertToIL(systemContext& ctx);
 
     
 };

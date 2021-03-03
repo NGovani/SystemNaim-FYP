@@ -1,4 +1,5 @@
 #include "context.hpp"
+#include "functional.hpp"
 
 //---------------------------------------------//
 //--------------Lexer_Context------------------//
@@ -33,16 +34,79 @@ void pyContext::decScope(){
 //---------------- Module Context -------------//
 //---------------------------------------------//
 
+void moduleContext::handleTempState(const std::string& stateName, const stateContainer& stateData){
+    bool tmpStatePresent = true;
+    std::vector<std::string> statesToChange;
+    while(tmpStatePresent){
+        std::visit(functional::overload{
+        [&](expressionStateInfo& st) {tmpStatePresent = false;},
+        [&](functionStateInfo& st) {tmpStatePresent = false;},
+        [&](branchStateInfo& st) {tmpStatePresent = false;},
+        [&](conditionalStateInfo& st) {tmpStatePresent = false;},
+        [&](temporaryStateInfo& st) {statesToChange.insert(statesToChange.end(), st.jumpToHere.begin(), st.jumpToHere.end());
+                                    this->states.pop_back();
+                                    }
+        }, this->states.back().getState());
+    }
+    for(auto name : statesToChange){
+        std::visit(functional::overload{
+        [&](expressionStateInfo& st) {st.nxtState = stateName;},
+        [&](functionStateInfo& st) {/*TODO*/},
+        [&](branchStateInfo& st) {st.jumpLabel = stateName;},
+        [&](conditionalStateInfo& st) {/*TODO*/},
+        [&](temporaryStateInfo& st) {}
+        }, this->findState(name).getState());
+    }
+    this->states.push_back(stateInfo(stateName, stateData));
+}
+
+
 // addState: generates a unique label using the stateName and creates an entry
 //           in the states vector
 std::string moduleContext::addState(const std::string& stateName, const stateContainer& stateData){
     std::string uniqueName = stateName + std::to_string(stateCount++);
-    this->states.push_back(stateInfo(uniqueName, stateData));
+    if(!this->states.empty()){
+        std::visit(functional::overload{
+            [&](expressionStateInfo& st) {this->states.push_back(stateInfo(uniqueName, stateData));},
+            [&](functionStateInfo& st) {this->states.push_back(stateInfo(uniqueName, stateData));},
+            [&](branchStateInfo& st) {this->states.push_back(stateInfo(uniqueName, stateData));},
+            [&](conditionalStateInfo& st) {this->states.push_back(stateInfo(uniqueName, stateData));},
+            [&](temporaryStateInfo& st) {this->handleTempState(uniqueName, stateData);}
+        }, this->states.back().getState());
+    } else {
+        this->states.push_back(stateInfo(uniqueName, stateData));
+    }
     return uniqueName;
+}
+
+void moduleContext::addNamedState(const std::string& stateName, const stateContainer& stateData){
+    if(!this->states.empty()){
+        std::visit(functional::overload{
+            [&](expressionStateInfo& st) {this->states.push_back(stateInfo(stateName, stateData));},
+            [&](functionStateInfo& st) {this->states.push_back(stateInfo(stateName, stateData));},
+            [&](branchStateInfo& st) {this->states.push_back(stateInfo(stateName, stateData));},
+            [&](conditionalStateInfo& st) {this->states.push_back(stateInfo(stateName, stateData));},
+            [&](temporaryStateInfo& st) {this->handleTempState(stateName, stateData);}
+        }, this->states.back().getState());
+    } else {
+        this->states.push_back(stateInfo(stateName, stateData));
+    }
 }
 
 std::string moduleContext::genTmpVar(const std::string& varName){
     return varName + std::to_string(this->varCount++);
+}
+
+std::string moduleContext::genStateName(const std::string& stateName){
+    return stateName + std::to_string(stateCount++);;
+}
+
+std::string moduleContext::lastStateName(){
+    return this->states.back().getStateName();
+}
+
+stateInfo& moduleContext::findState(std::string stateName){
+    return *(std::find(this->states.begin(), this->states.end(), stateName));
 }
 
 void moduleContext::addVariable(const std::string& varName){

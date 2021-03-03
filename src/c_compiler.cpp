@@ -19,13 +19,13 @@ int main(int argc, char* argv[]){
     try
     {
         ast->convertToIL(sysCtx);
+        std::cout << "======= Printing Verilog ======" << std::endl;
+        std::cout << sysCtx.getCurrentModule().printVerilog() << std::endl;
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << std::endl;
     }
-    std::cout << "======= Printing Verilog ======" << std::endl;
-    std::cout << sysCtx.getCurrentModule().printVerilog() << std::endl;
 
     // stream.close();
     return 0;

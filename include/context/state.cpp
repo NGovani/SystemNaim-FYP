@@ -36,6 +36,24 @@ std::string createExpressionVerilog(expressionStateInfo st){
     case RS:
         exprString += " >> ";
         break;
+    case EQ:
+        exprString += " == ";
+        break;
+    case NEQ:
+        exprString += " != ";
+        break;
+    case GT:
+        exprString += " > ";
+        break;
+    case GTE:
+        exprString += " >= ";
+        break;
+    case LT:
+        exprString += " < ";
+        break;
+    case LTE:
+        exprString += " <= ";
+        break;
     case MOV:
         exprString += ";\n";
         return exprString;
@@ -56,10 +74,12 @@ std::string createExpressionVerilog(expressionStateInfo st){
 std::string handleStateToVerilog(expressionStateInfo st, const std::string& nextState){
     std::string exprString = createExpressionVerilog(st);
     if(st.returnState){
-        std::cerr << "insinde here" << std::endl;
         exprString += "done <= 1'b1\n";
         exprString += "state_next <= 16'd0\n";
-    } else {
+    } else if (!st.nxtState.empty()) {
+        exprString += "state_next <= " + st.nxtState + ";\n";
+    }
+    else {
         exprString += "state_next <= " + nextState + ";\n";
     }
     return exprString;
@@ -68,8 +88,16 @@ std::string handleStateToVerilog(expressionStateInfo st, const std::string& next
 std::string handleStateToVerilog(functionStateInfo st, const std::string& nextState){
 }
 std::string handleStateToVerilog(branchStateInfo st, const std::string& nextState){
+    if(!st.condVar.empty()){
+        return "state_next <= " + st.condVar + " ? " + nextState + " : "  + st.jumpLabel + ";\n" ;
+    } else {
+        return "state_next <= " + st.jumpLabel + ";\n";
+    }
 }
 std::string handleStateToVerilog(conditionalStateInfo st, const std::string& nextState){
+}
+std::string handleStateToVerilog(temporaryStateInfo st, const std::string& nextState){
+    return "state_next <= " + nextState + ";\n";
 }
 
 std::string stateInfo::printVerilog(std::string nextState){
@@ -85,6 +113,10 @@ std::string stateInfo::printVerilog(std::string nextState){
     //end keyword
     r += "end\n";
     return r;
+}
+
+bool stateInfo::operator== (std::string _stateName){
+    return this->stateName == _stateName;
 }
 
 

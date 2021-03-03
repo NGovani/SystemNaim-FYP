@@ -11,23 +11,44 @@ void block_item_list::convertToIL(systemContext& ctx){
     }
 }
 
+//IfStatement
 
-// //IfStatement
-// void IfStatement::printMips(compilerContext& ctx, std::ostream& stream){
-//     std::string trueEnd = ctx.generateLabel("TRUE_END_");
-//     std::string falseEnd = ctx.generateLabel("FALSE_END_");
-//     if(cond != NULL){cond->printMips(ctx, stream);}
-//     stream << "beq $2, $0, " << trueEnd << "\nnop" << std::endl;
-//     _true->printMips(ctx, stream);
-//     if(_false != NULL){stream << "j " << falseEnd << "\nnop" << std::endl;}
-//     stream << trueEnd << ":" << std::endl;
-//     if(_false != NULL){
-//         _false->printMips(ctx, stream);
-//         stream << falseEnd << ":" << std::endl;
-//     }
-//     stream << "nop" << std::endl;
-//     stream << "move $2, $0" << std::endl;
-// }
+void IfStatement::convertToIL(systemContext& ctx){
+    // calculate condition expression
+    std::string condVar = ctx.getCurrentModule().genTmpVar("cond");
+    ctx.getCurrentModule().addVariable(condVar);
+    expressionStateInfo condState;
+    condState.r = condVar;
+
+    ctx.addExprState(condState);
+    if(this->cond == NULL) throw std::runtime_error("cond pointer empty");
+    this->cond->convertToIL(ctx);
+    ctx.getCurrentModule().addState("ifExpr", stateContainer(ctx.getExprState()));
+    ctx.purgeExprState();
+    //add branch state
+    branchStateInfo ifBranch;
+    temporaryStateInfo tmpState1; // state placeholder for after first compound statement
+    std::string tmpStateName = ctx.getCurrentModule().genStateName("tmp"); //used as a placeholder to jump to
+    ifBranch.condVar = condVar;
+    ifBranch.jumpLabel = tmpStateName;
+    tmpState1.jumpToHere.push_back(ctx.getCurrentModule().addState("ifCheck", stateContainer(ifBranch))); // add cond check state
+    
+    //print true statement
+    if(this->_true == NULL) throw std::runtime_error("_true pointer empty");
+    this->_true->convertToIL(ctx);
+    std::string lastStateTrue = ctx.getCurrentModule().lastStateName();
+    ctx.getCurrentModule().addNamedState(tmpStateName, stateContainer(tmpState1));
+    //simple if statement complete, next is for else statement
+    if(this->_false != NULL){
+        temporaryStateInfo tmpState2; // state placeholder for after second compund
+        std::string tmpStateName = ctx.getCurrentModule().genStateName("tmp");
+        tmpState2.jumpToHere.push_back(lastStateTrue); //add last state from previous statement to vec: - 1 since previous state is tmp state
+        this->_false->convertToIL(ctx);
+        ctx.getCurrentModule().addNamedState(tmpStateName, stateContainer(tmpState2));
+    }
+
+}
+
 
 // //WhileStatement
 // void WhileStatement::printMips(compilerContext& ctx, std::ostream& stream){
