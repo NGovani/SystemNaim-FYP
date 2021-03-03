@@ -67,11 +67,12 @@ std::string moduleContext::addState(const std::string& stateName, const stateCon
     std::string uniqueName = stateName + std::to_string(stateCount++);
     if(!this->states.empty()){
         std::visit(functional::overload{
-            [&](expressionStateInfo& st) {this->states.push_back(stateInfo(uniqueName, stateData));},
-            [&](functionStateInfo& st) {this->states.push_back(stateInfo(uniqueName, stateData));},
-            [&](branchStateInfo& st) {this->states.push_back(stateInfo(uniqueName, stateData));},
-            [&](conditionalStateInfo& st) {this->states.push_back(stateInfo(uniqueName, stateData));},
-            [&](temporaryStateInfo& st) {this->handleTempState(uniqueName, stateData);}
+            [&](temporaryStateInfo& st) {
+                if(auto chk = std::get_if<temporaryStateInfo>(&stateData))
+                    this->states.push_back(stateInfo(uniqueName, stateData));
+                else
+                    this->handleTempState(uniqueName, stateData);},
+            [&](auto& st) {this->states.push_back(stateInfo(uniqueName, stateData));}
         }, this->states.back().getState());
     } else {
         this->states.push_back(stateInfo(uniqueName, stateData));
@@ -82,13 +83,16 @@ std::string moduleContext::addState(const std::string& stateName, const stateCon
 void moduleContext::addNamedState(const std::string& stateName, const stateContainer& stateData){
     if(!this->states.empty()){
         std::visit(functional::overload{
-            [&](expressionStateInfo& st) {this->states.push_back(stateInfo(stateName, stateData));},
-            [&](functionStateInfo& st) {this->states.push_back(stateInfo(stateName, stateData));},
-            [&](branchStateInfo& st) {this->states.push_back(stateInfo(stateName, stateData));},
-            [&](conditionalStateInfo& st) {this->states.push_back(stateInfo(stateName, stateData));},
-            [&](temporaryStateInfo& st) {this->handleTempState(stateName, stateData);}
+            [&](temporaryStateInfo& st) {
+                if(auto chk = std::get_if<temporaryStateInfo>(&stateData))
+                    //if the previous state is a tmp and so is this then just add this one to the list
+                    this->states.push_back(stateInfo(stateName, stateData));
+                else
+                    this->handleTempState(stateName, stateData);},
+            [&](auto& st) {this->states.push_back(stateInfo(stateName, stateData));}
         }, this->states.back().getState());
     } else {
+        // if there are no states then just add it
         this->states.push_back(stateInfo(stateName, stateData));
     }
 }
