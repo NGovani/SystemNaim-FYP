@@ -121,6 +121,16 @@ void moduleContext::addVariable(const std::string& varName, int elements){
     this->variables[varName] = varData(elements);
 }
 
+void moduleContext::modifyNextState(std::string stateName, std::string nextState){
+    stateInfo& s = this->findState(stateName);
+    std::visit(functional::overload{
+        [&](expressionStateInfo& st) {st.nxtState = nextState;},
+        [&](branchStateInfo& st) {st.nxtState = nextState;},
+        [&](auto& st) {throw std::runtime_error("function. cond, and tmp state modify not implemented");}
+    }, this->states.back().getState());
+
+}
+
 std::string moduleContext::printVerilog(){
     std::string r = "";
     r += ("module " + this->moduleName + " "); // add initial module name and preamble
@@ -130,28 +140,27 @@ std::string moduleContext::printVerilog(){
     }
     r += ("\noutput reg done,\noutput reg [31:0] d_out\n);\n\n"); //module inputs and outputs
 
+    r += "`include \"" + this->moduleName + "_params.vh\"\n\n";
+
     //print standard variables
     r += ("reg [15:0] state, state_next;\n\n");
     //print program variables;
     for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
         r += ("reg [31:0] " + name + ";\n"); //TODO change to include arrays
     }
-    r += "reg [31:0] d_out;\n"; //output reg for returns
     
     // always @ logic: update state
     r += "\nalways @ (posedge clk) begin\n"
     "if(!resetn)\n"
     "state <= 16'd0;\n"
+    "else if(start)\n"
+    "state <= " + this->states[0].getStateName() + ";\n"
     "else\n"
     "state <= state_next;\n"
     "end\n\n";
     // state logic
     r += "always @ (state) begin\n"
-    "case (state)\n"
-    "16'd0: begin\n"
-    "if (start)\n"
-    "state_next <= " + this->states[0].getStateName() + ";\n"
-    "end\n";
+    "case (state)\n";
     
     for(std::vector<stateInfo>::iterator it = this->states.begin(); it != this->states.end(); it++){
         if (it == (std::prev(this->states.end())))
@@ -163,18 +172,18 @@ std::string moduleContext::printVerilog(){
         }
     }
 
-    r += "end\nendmodule\n";
+    r += "endcase\nend\n\nendmodule\n";
     return r;
 }
 
-void moduleContext::modifyNextState(std::string stateName, std::string nextState){
-    stateInfo& s = this->findState(stateName);
-    std::visit(functional::overload{
-        [&](expressionStateInfo& st) {st.nxtState = nextState;},
-        [&](branchStateInfo& st) {st.nxtState = nextState;},
-        [&](auto& st) {throw std::runtime_error("function. cond, and tmp state modify not implemented");}
-    }, this->states.back().getState());
 
+std::string moduleContext::printParams(){
+    int counter = 1;
+    std::string out;
+    for(auto& st : this->states){
+        out += "parameter " + st.getStateName() + " = 16'd" + std::to_string(counter++) + ";\n";
+    }
+    return out;
 }
 
 

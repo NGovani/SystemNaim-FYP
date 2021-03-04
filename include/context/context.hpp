@@ -75,16 +75,27 @@ private:
 public:
     moduleContext(std::string _moduleName): stateCount(0), varCount(0), moduleName(_moduleName) {}
     moduleContext(std::string _moduleName, std::vector<std::string> _inputs): stateCount(0), varCount(0), moduleName(_moduleName), inputs(_inputs) {}
+
+    // adding states
     std::string addState(const std::string& stateName, const stateContainer& stateData); //generates a state name and adds it the state list, return index of state
     void addNamedState(const std::string& stateName, const stateContainer& stateData); // does not generate a state name, assume label has already been generated, return index of state
+    
+    //variables
     void addVariable(const std::string& varName);
     void addVariable(const std::string& varName, int elements); //used for arrays
-    std::string printVerilog();
+    
+    // generators
     std::string genStateName(const std::string& stateName);
     std::string genTmpVar(const std::string& varName);
+
+    // state manipulation
     stateInfo& findState(std::string stateName);
     std::string lastStateName();
     void modifyNextState(std::string stateName, std::string nextState);
+
+    // output
+    std::string printVerilog();
+    std::string printParams();
 };
 
 // systemContext :  contains all modules which are to be created, aswell as structs to hold data

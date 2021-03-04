@@ -11,14 +11,14 @@ CPPFLAGS += -w
 
 
 ###COMPILER RULES###
-compiler: bin/c_compiler
+compiler: bin/c_to_v_compiler
 
-bin/c_compiler : include/context/state.o include/context/context.o include/ast/ast_spec_nodes.o include/ast/ast_branch_nodes.o include/ast/ast_expression_nodes.o include/ast/ast_statement_nodes.o src/c_compiler.o src/c_parser.tab.o src/c_lexer.yy.o 
-	g++ $(CPPFLAGS) -o bin/c_compiler $^
+bin/c_to_v_compiler : include/context/state.o include/context/context.o include/ast/ast_spec_nodes.o include/ast/ast_branch_nodes.o include/ast/ast_expression_nodes.o include/ast/ast_statement_nodes.o src/c_to_v_compiler.o src/c_parser.tab.o src/c_lexer.yy.o 
+	g++ $(CPPFLAGS) -o bin/c_to_v_compiler $^
 
-src/c_compiler.o : src/c_compiler.cpp 
+src/c_to_v_compiler.o : src/c_to_v_compiler.cpp 
 	mkdir -p bin
-	g++ $(CPPFLAGS) -c src/c_compiler.cpp -o src/c_compiler.o
+	g++ $(CPPFLAGS) -c src/c_to_v_compiler.cpp -o src/c_to_v_compiler.o
 
 
 

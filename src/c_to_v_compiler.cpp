@@ -1,4 +1,6 @@
 #include "../include/pkg.hpp"
+#include <iostream>
+#include <fstream>
 
 int main(int argc, char* argv[]){
 
@@ -12,15 +14,17 @@ int main(int argc, char* argv[]){
     Node* ast = parseAST(argv[1]);
     //create context and ostream
     static systemContext sysCtx;
-    // std::ostream* os = &std::cout;
-    // std::ofstream stream;
-    
-    //run print mips
+    std::ofstream main_file, param_file;
     try
     {
         ast->convertToIL(sysCtx);
         std::cout << "======= Printing Verilog ======" << std::endl;
-        std::cout << sysCtx.getCurrentModule().printVerilog() << std::endl;
+        main_file.open("out/main.v");
+        main_file << sysCtx.getCurrentModule().printVerilog() << std::endl;
+        main_file.close();
+        param_file.open("out/main_params.vh");
+        param_file << sysCtx.getCurrentModule().printParams() << std::endl;
+        param_file.close();
     }
     catch(const std::exception& e)
     {
