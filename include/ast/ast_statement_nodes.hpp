@@ -106,7 +106,7 @@ class WhileStatement : public Node{
         std::cout<< std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
-	void convertToIL(systemContext& ctx){throw std::runtime_error("WhileStatement not implemented");}
+	void convertToIL(systemContext& ctx);
     
 };
 
@@ -150,7 +150,7 @@ class ForStatement : public Node{
         std::cout<<std::endl;
         if(stmt != NULL) {stmt->printTree(n+1);}
     }
-	void convertToIL(systemContext& ctx){throw std::runtime_error("ForStatement not implemented");}
+	void convertToIL(systemContext& ctx);
 
     
 };

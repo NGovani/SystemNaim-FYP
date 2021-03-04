@@ -167,6 +167,17 @@ std::string moduleContext::printVerilog(){
     return r;
 }
 
+void moduleContext::modifyNextState(std::string stateName, std::string nextState){
+    stateInfo& s = this->findState(stateName);
+    std::visit(functional::overload{
+        [&](expressionStateInfo& st) {st.nxtState = nextState;},
+        [&](branchStateInfo& st) {st.nxtState = nextState;},
+        [&](auto& st) {throw std::runtime_error("function. cond, and tmp state modify not implemented");}
+    }, this->states.back().getState());
+
+}
+
+
 //---------------------------------------------//
 //---------------- System Context -------------//
 //---------------------------------------------//

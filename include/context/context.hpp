@@ -84,6 +84,7 @@ public:
     std::string genTmpVar(const std::string& varName);
     stateInfo& findState(std::string stateName);
     std::string lastStateName();
+    void modifyNextState(std::string stateName, std::string nextState);
 };
 
 // systemContext :  contains all modules which are to be created, aswell as structs to hold data

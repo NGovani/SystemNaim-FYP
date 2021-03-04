@@ -1,5 +1,4 @@
 #include "ast_statement_nodes.hpp"
-
 //Compound Statement
 void compound_statement::convertToIL(systemContext& ctx){
     this->block_list->convertToIL(ctx);
@@ -23,7 +22,7 @@ void IfStatement::convertToIL(systemContext& ctx){
     ctx.addExprState(condState);
     if(this->cond == NULL) throw std::runtime_error("cond pointer empty");
     this->cond->convertToIL(ctx);
-    ctx.getCurrentModule().addState("ifCondExpr", stateContainer(ctx.getExprState()));
+    ctx.getCurrentModule().addState("whileCondExpr", stateContainer(ctx.getExprState()));
     ctx.purgeExprState();
     //add branch state
     branchStateInfo ifBranch;
@@ -31,7 +30,7 @@ void IfStatement::convertToIL(systemContext& ctx){
     std::string tmpStateName = ctx.getCurrentModule().genStateName("tmp"); //used as a placeholder to jump to
     ifBranch.condVar = condVar;
     ifBranch.jumpLabel = tmpStateName;
-    tmpState1.jumpToHere.push_back(ctx.getCurrentModule().addState("ifBranch", stateContainer(ifBranch))); // add cond check state
+    tmpState1.jumpToHere.push_back(ctx.getCurrentModule().addState("whileBranch", stateContainer(ifBranch))); // add cond check state
     
     //print true statement
     if(this->_true == NULL) throw std::runtime_error("_true pointer empty");
@@ -50,68 +49,81 @@ void IfStatement::convertToIL(systemContext& ctx){
 }
 
 
-// //WhileStatement
-// void WhileStatement::printMips(compilerContext& ctx, std::ostream& stream){
-//     std::string startLabel = ctx.generateLabel("start_");
-//     std::string endLabel = ctx.generateLabel("end_");
-//     ctx.currentFunc()->LoopsLabels.push_back(LoopContext(startLabel, endLabel, ctx.currentFunc()->scopes.size()));
-//     stream << startLabel << ":" << std::endl;
-//     cond->printMips(ctx, stream);
-//     stream << "beq $2, $0, " << endLabel << "\nnop" << std::endl;
-//     stmt->printMips(ctx, stream);
-//     stream << "j " << startLabel << "\nnop" << std::endl;
-//     stream << endLabel << ":" << std::endl;
-//     stream << "move $2, $0" << std::endl;
-//     ctx.currentFunc()->LoopsLabels.pop_back();
-// }
+//WhileStatement
 
-// //Do statement
-// void DoStatement::printMips(compilerContext& ctx, std::ostream& stream){
-//     std::string startLabel = ctx.generateLabel("start_");
-//     std::string endLabel = ctx.generateLabel("end_");
-//     std::string doTrueLabel = ctx.generateLabel("doTrue_");
+void WhileStatement::convertToIL(systemContext& ctx){
+    std::string condVar = ctx.getCurrentModule().genTmpVar("whileCond");
+    ctx.getCurrentModule().addVariable(condVar);
+    expressionStateInfo condState;
+    condState.r = condVar;
 
-//     ctx.currentFunc()->LoopsLabels.push_back(LoopContext(startLabel, endLabel, ctx.currentFunc()->scopes.size()));
+    // add while condition expression but save label
+    ctx.addExprState(condState);
+    if(this->cond == NULL) throw std::runtime_error("cond pointer empty");
+    this->cond->convertToIL(ctx);
+    std::string condLabel = ctx.getCurrentModule().addState("whileCondExpr", stateContainer(ctx.getExprState()));
+    ctx.purgeExprState();
 
-//     stream << doTrueLabel << ":" << std::endl;
-//     stmt->printMips(ctx, stream);
+    // jump to end of loop if cond is false
+    branchStateInfo whileBranch;
+    temporaryStateInfo tmpState1; // state placeholder for after first compound statement
+    std::string tmpStateName = ctx.getCurrentModule().genStateName("tmp"); //used as a placeholder to jump to
+    whileBranch.condVar = condVar;
+    whileBranch.jumpLabel = tmpStateName;
+    tmpState1.jumpToHere.push_back(ctx.getCurrentModule().addState("whileBranch", stateContainer(whileBranch)));
 
-//     stream << startLabel << ":" << std::endl;
-//     cond->printMips(ctx, stream);
+    if(this->stmt == NULL) throw std::runtime_error("stmt pointer empty");
+    this->stmt->convertToIL(ctx);
 
-//     stream << "bne $2, 0, " << doTrueLabel << "\nnop" << std::endl;
-//     stream << endLabel << ":" << std::endl;
+    // grab last statement and change its next state to the condition check state
+    std::string lastState = ctx.getCurrentModule().lastStateName();
+    ctx.getCurrentModule().modifyNextState(lastState, condLabel);
+    
+    ctx.getCurrentModule().addNamedState(tmpStateName, stateContainer(tmpState1));
+}
 
-//     stream << "move $2, $0" << std::endl;
-//     ctx.currentFunc()->LoopsLabels.pop_back();
 
-// }
 
-// //ForStatement
+//ForStatement
 
-// void ForStatement::printMips(compilerContext& ctx, std::ostream& stream){
-//     std::string startLabel = ctx.generateLabel("start_");
-//     std::string endLabel = ctx.generateLabel("end_");
-//     std::string iterateLabel = ctx.generateLabel("iterate_");
+void ForStatement::convertToIL(systemContext& ctx){
+    // add initial expression
+    if(this->init == NULL) throw std::runtime_error("init pointer empty");
+    this->init->convertToIL(ctx);
 
-//     ctx.currentFunc()->LoopsLabels.push_back(LoopContext(iterateLabel, endLabel, ctx.currentFunc()->scopes.size()));
+    // save label for condition
+    std::string condVar = ctx.getCurrentModule().genTmpVar("forCond");
+    ctx.getCurrentModule().addVariable(condVar);
+    expressionStateInfo condState;
+    condState.r = condVar;
+    ctx.addExprState(condState);
+    if(this->cond == NULL) throw std::runtime_error("cond pointer empty");
+    this->cond->convertToIL(ctx);
+    std::string condLabel = ctx.getCurrentModule().addState("forCondExpr", stateContainer(ctx.getExprState()));
+    ctx.purgeExprState();
 
-//     if(init != NULL){init->printMips(ctx,stream);}
+    // jump to end of loop if cond is false
+    branchStateInfo forBranch;
+    temporaryStateInfo tmpState1; // state placeholder for after first compound statement
+    std::string tmpStateName = ctx.getCurrentModule().genStateName("tmp"); //used as a placeholder to jump to
+    forBranch.condVar = condVar;
+    forBranch.jumpLabel = tmpStateName;
+    tmpState1.jumpToHere.push_back(ctx.getCurrentModule().addState("forBranch", stateContainer(forBranch)));
 
-//     stream << startLabel << ":" << std::endl;
-//     if(cond != NULL){cond->printMips(ctx,stream);}
-//     stream << "beq $2, $0, " << endLabel << "\nnop" << std::endl;
+    //  inner statements of loop
+    if(this->stmt == NULL) throw std::runtime_error("stmt pointer empty");
+    this->stmt->convertToIL(ctx);
 
-//     if(stmt != NULL){stmt->printMips(ctx,stream);}
+    //iteration 
+    if(this->iter == NULL) throw std::runtime_error("iter pointer empty");
+    this->iter->convertToIL(ctx);
 
-//     stream << iterateLabel << ":" << std::endl;
-//     if(iter != NULL){iter->printMips(ctx,stream);}
-//     stream << "j " << startLabel << "\nnop" << std::endl;
+    // grab last statement and change its next state to the condition check state
+    std::string lastState = ctx.getCurrentModule().lastStateName();
+    ctx.getCurrentModule().modifyNextState(lastState, condLabel);
 
-//     stream << endLabel << ":" << std::endl;
-//     stream << "move $2, $0" << std::endl;
-//     ctx.currentFunc()->LoopsLabels.pop_back();
-// }
+    ctx.getCurrentModule().addNamedState(tmpStateName, stateContainer(tmpState1));
+}
 
 
 //ReturnStatement
