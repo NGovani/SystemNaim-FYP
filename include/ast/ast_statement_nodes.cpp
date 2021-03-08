@@ -15,7 +15,7 @@ void block_item_list::convertToIL(systemContext& ctx){
 void IfStatement::convertToIL(systemContext& ctx){
     // calculate condition expression
     std::string condVar = ctx.getCurrentModule().genTmpVar("cond");
-    ctx.getCurrentModule().addVariable(condVar);
+    ctx.getCurrentModule().addVariable(condVar, 1);
     expressionStateInfo condState;
     condState.r = condVar;
 
@@ -53,7 +53,7 @@ void IfStatement::convertToIL(systemContext& ctx){
 
 void WhileStatement::convertToIL(systemContext& ctx){
     std::string condVar = ctx.getCurrentModule().genTmpVar("whileCond");
-    ctx.getCurrentModule().addVariable(condVar);
+    ctx.getCurrentModule().addVariable(condVar, 1);
     expressionStateInfo condState;
     condState.r = condVar;
 
@@ -93,7 +93,7 @@ void ForStatement::convertToIL(systemContext& ctx){
 
     // save label for condition
     std::string condVar = ctx.getCurrentModule().genTmpVar("forCond");
-    ctx.getCurrentModule().addVariable(condVar);
+    ctx.getCurrentModule().addVariable(condVar, 1);
     expressionStateInfo condState;
     condState.r = condVar;
     ctx.addExprState(condState);

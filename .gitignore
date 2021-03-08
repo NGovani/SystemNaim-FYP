@@ -7,4 +7,5 @@ src/c_lexer.yy.cpp
 src/c_parser.tab.cpp
 src/c_parser.tab.hpp
 out/*
+obj_dir/*
 bin/c_to_v_compiler

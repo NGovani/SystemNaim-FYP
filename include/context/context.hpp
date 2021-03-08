@@ -32,34 +32,16 @@ struct LoopContext{ //needed for continue and break
 
 
 struct varData{
-    bool isArray = false;
-    int elements = 1;
+    bool isArray;
+    int elements;
+    int width;
 
-    varData(){} //usually varData is not needed, just for arrays;
-    varData(int _elements): isArray(true), elements(_elements){}
+    varData();
+    varData(int _width);
+    varData(int _width, int _elements);
 };
 
-struct scope{
-    std::map<std::string, varData> bindings; 
-    int stackOffset;
 
-    scope(std::map<std::string, varData> _bindings, int _stackOffset);
-    void addToBindings(std::string id, int offset, int elements, int size, bool global, bool pointer);
-};
-
-struct funcScope{
-    int scopeLevel = 0;
-
-    std::vector<scope> scopes;
-    std::map<std::string, varData> parameters;
-    std::vector<LoopContext> LoopsLabels;
-
-    int memUsed = 0; //should be incremented as you add new bindings
-    void incScope();
-    void decScope(std::ostream& stream);
-    funcScope(std::ostream& stream, std::map<std::string, varData> _globalVars);
-     //the function definition node should pack the info correctly
-};  //for a function with parameters.
 
 
 // moduleContext: keeps track of variables and states for a specific module.
@@ -81,8 +63,8 @@ public:
     void addNamedState(const std::string& stateName, const stateContainer& stateData); // does not generate a state name, assume label has already been generated, return index of state
     
     //variables
-    void addVariable(const std::string& varName);
-    void addVariable(const std::string& varName, int elements); //used for arrays
+    void addVariable(const std::string& varName, int width);
+    void addVariable(const std::string& varName, int width, int elements); //used for arrays
     
     // generators
     std::string genStateName(const std::string& stateName);

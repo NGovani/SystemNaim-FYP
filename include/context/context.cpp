@@ -31,6 +31,13 @@ void pyContext::decScope(){
 
 
 //---------------------------------------------//
+//--------------VarData------------------------//
+//---------------------------------------------//
+varData::varData(){}
+varData::varData(int _width): width(_width), isArray(false), elements(1){} 
+varData::varData(int _width, int _elements): width(_width), isArray(true), elements(_elements){}
+
+//---------------------------------------------//
 //---------------- Module Context -------------//
 //---------------------------------------------//
 
@@ -113,12 +120,12 @@ stateInfo& moduleContext::findState(std::string stateName){
     return *(std::find(this->states.begin(), this->states.end(), stateName));
 }
 
-void moduleContext::addVariable(const std::string& varName){
-    this->variables[varName] = varData();
+void moduleContext::addVariable(const std::string& varName, int width){
+    this->variables[varName] = varData(width);
 }
 
-void moduleContext::addVariable(const std::string& varName, int elements){
-    this->variables[varName] = varData(elements);
+void moduleContext::addVariable(const std::string& varName, int width, int elements){
+    this->variables[varName] = varData(width, elements);
 }
 
 void moduleContext::modifyNextState(std::string stateName, std::string nextState){
@@ -146,7 +153,8 @@ std::string moduleContext::printVerilog(){
     r += ("reg [15:0] state, state_next;\n\n");
     //print program variables;
     for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
-        r += ("reg [31:0] " + name + ";\n"); //TODO change to include arrays
+        std::string varWidth = data.width == 32 ? "[31:0] " : "" ;
+        r += ("reg " + varWidth + name + ";\n"); //TODO change to include arrays
     }
     
     // always @ logic: update state
@@ -171,6 +179,7 @@ std::string moduleContext::printVerilog(){
             r+= it->printVerilog(nx->getStateName());
         }
     }
+    r += "default: ;\n";
 
     r += "endcase\nend\n\nendmodule\n";
     return r;

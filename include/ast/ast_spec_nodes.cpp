@@ -24,7 +24,7 @@ declaration_specifiers::declaration_specifiers(std::string s): type_name(s) {}
 void init_declarator::convertToIL(systemContext& ctx){
     ctx.addDecCtx();
     this->declaratorPtr->convertToIL(ctx);
-    ctx.getCurrentModule().addVariable(ctx.getDecCtx().id);
+    ctx.getCurrentModule().addVariable(ctx.getDecCtx().id, 32);
     if(this->initialiserPtr != NULL){
         this->initialiserPtr->convertToIL(ctx);
     }

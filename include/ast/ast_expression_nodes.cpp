@@ -26,7 +26,7 @@ expressionStateInfo checkChildExpr(const std::string & stateName, const std::str
         else
             returnState.op2 = newChildState.r;
         ctx.getCurrentModule().addState(stateName, stateContainer(newChildState));
-        ctx.getCurrentModule().addVariable(newChildState.r);
+        ctx.getCurrentModule().addVariable(newChildState.r, 32);
     }
     ctx.purgeExprState();
 
