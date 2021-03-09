@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/mnt/e/MyDocuments/Project/University/Year_4/FYP/Verilator/verilator/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

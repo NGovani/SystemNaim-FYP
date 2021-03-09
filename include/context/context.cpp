@@ -150,7 +150,7 @@ std::string moduleContext::printVerilog(){
     r += "`include \"" + this->moduleName + "_params.vh\"\n\n";
 
     //print standard variables
-    r += ("reg [15:0] state, state_next;\n\n");
+    r += ("reg [15:0] state;\n\n");
     //print program variables;
     for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
         std::string varWidth = data.width == 32 ? "[31:0] " : "" ;
@@ -158,25 +158,38 @@ std::string moduleContext::printVerilog(){
     }
     
     // always @ logic: update state
-    r += "\nalways @ (posedge clk) begin\n"
+    r += "\nalways @ (posedge clk or negedge resetn) begin\n"
     "if(!resetn)\n"
-    "state <= 16'd0;\n"
-    "else if(start)\n"
-    "state <= " + this->states[0].getStateName() + ";\n"
-    "else\n"
-    "state <= state_next;\n"
+    "\tstate <= 16'd0;\n"
+    "else begin\n"
+    "case (state)\n"
+    "16'd0: state <= start ? " + this->states[0].getStateName() + " : 16'd0;\n";
+    for(std::vector<stateInfo>::iterator it = this->states.begin(); it != this->states.end(); it++){
+        if (it == (std::prev(this->states.end())))
+            r+= it->printVerilogStateChange("16'd0");
+        else{
+            auto nx = std::next(it, 1);
+            r+= it->printVerilogStateChange(nx->getStateName());
+        }
+    }
+    r += "default: ;\n";
+    r += "endcase\nend\n"
     "end\n\n";
     // state logic
     r += "always @ (state) begin\n"
-    "case (state)\n";
+    "case (state)\n"
+    "16'd0: begin\n"
+    "\tdone <= 0;\n"
+    "\td_out <= 0;\n"
+    "end\n";
+
     
     for(std::vector<stateInfo>::iterator it = this->states.begin(); it != this->states.end(); it++){
         if (it == (std::prev(this->states.end())))
-            r+= it->printVerilog("16'd0");
+            r+= it->printVerilogState();
         else{
-            ;
             auto nx = std::next(it, 1);
-            r+= it->printVerilog(nx->getStateName());
+            r+= it->printVerilogState();
         }
     }
     r += "default: ;\n";
