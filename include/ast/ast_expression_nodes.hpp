@@ -505,7 +505,7 @@ class function_call: public ExpressionNode{
         if(list != NULL){list->printTree(n);}
 		std::cout << " }";
     }
-	void convertToIL(systemContext& ctx){throw std::runtime_error("function_call not implemented");}
+	void convertToIL(systemContext& ctx);
 	
 };
 

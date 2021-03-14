@@ -7,3 +7,7 @@ testcase:
 	@echo "===========Compilation Complete============"
 	@echo "==============Running Test================="
 	@obj_dir/Vfunc
+
+clean:
+	@rm -rf obj_dir
+	@rm -rf out/*

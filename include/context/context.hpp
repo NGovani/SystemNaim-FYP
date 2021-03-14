@@ -41,6 +41,17 @@ struct varData{
     varData(int _width, int _elements);
 };
 
+struct subModuleInfo {
+    std::string moduleIdentifier; // identifier within module
+    std::string startSignal, doneSignal;
+    std::string outDataWire; //name of wire for data out
+    std::map<std::string, std::string> inputReg; //key = input name, val = reg in this module connected to input
+    std::map<std::string,std::string> stateOutReg; //key = state, val = reg to store data out
+
+    subModuleInfo();
+    subModuleInfo(std::string _moduleIdentifier, std::string _startSignal, std::string _doneSignal, std::string _outDataWire, std::map<std::string, std::string> _inputReg );
+};
+
 
 
 
@@ -54,13 +65,14 @@ private:
     std::vector<std::string> inputs; //max 2 input variables
     int varCount;
     void handleTempState(const std::string& stateName, const stateContainer& stateData);
+    std::map<std::string, subModuleInfo> subModules;
 public:
     moduleContext(std::string _moduleName): stateCount(0), varCount(0), moduleName(_moduleName) {}
     moduleContext(std::string _moduleName, std::vector<std::string> _inputs): stateCount(0), varCount(0), moduleName(_moduleName), inputs(_inputs) {}
 
     // adding states
     std::string addState(const std::string& stateName, const stateContainer& stateData); //generates a state name and adds it the state list, return index of state
-    void addNamedState(const std::string& stateName, const stateContainer& stateData); // does not generate a state name, assume label has already been generated, return index of state
+    void addNamedState(const std::string& stateName, const stateContainer& stateData); // does not generate a state name, assume label has already been generated
     
     //variables
     void addVariable(const std::string& varName, int width);
@@ -69,15 +81,25 @@ public:
     // generators
     std::string genStateName(const std::string& stateName);
     std::string genTmpVar(const std::string& varName);
+    void genListOfVars( std::vector<std::string>& varNames);
 
     // state manipulation
     stateInfo& findState(std::string stateName);
     std::string lastStateName();
     void modifyNextState(std::string stateName, std::string nextState);
 
+    //submodule map
+    bool findSubModule(std::string moduleName);
+    subModuleInfo& getSubModuleInfo(std::string moduleName);
+
     // output
     std::string printVerilog();
     std::string printParams();
+
+    //inputs
+    std::vector<std::string> getInputs(){return this->inputs;}
+
+    bool operator== (std::string _moduleName);
 };
 
 // systemContext :  contains all modules which are to be created, aswell as structs to hold data
@@ -86,7 +108,7 @@ class systemContext {
 private:
     std::vector<moduleContext> modules; // holds all module data, including the states they have
     std::vector<declaratorContext> decCtx; // holds data for declarations
-    std::vector<expressionStateInfo> exprStates; //used to create expression states across nodes. might be worth turning into a vector
+    std::vector<expressionStateInfo> exprStates; //used to create expression states across nodes.
 public:
     expressionStateInfo& getExprState();
     void addExprState(expressionStateInfo e);
@@ -95,8 +117,10 @@ public:
     void addDecCtx(); // add new element to decCtx vector
     void purgeDecCtx(); // remove last element from decCtx vector.
     moduleContext& getCurrentModule();
+    moduleContext& findModule(std::string moduleName);
     void addModule(std::string name, std::vector<std::string> inputs);
-
+    subModuleInfo findFuncCall(std::string funcName); //checks if a function has been called by the current module
+    void addFuncCall(std::string funcName, std::string stateName, std::string regName);
 
 };
 

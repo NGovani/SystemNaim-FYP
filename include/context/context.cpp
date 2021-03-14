@@ -37,6 +37,10 @@ varData::varData(){}
 varData::varData(int _width): width(_width), isArray(false), elements(1){} 
 varData::varData(int _width, int _elements): width(_width), isArray(true), elements(_elements){}
 
+subModuleInfo::subModuleInfo(){}
+subModuleInfo::subModuleInfo(std::string _moduleIdentifier, std::string _startSignal, std::string _doneSignal, std::string _outDataWire, std::map<std::string, std::string> _inputReg ): moduleIdentifier(_moduleIdentifier), startSignal(_startSignal),
+ doneSignal(_doneSignal), outDataWire(_outDataWire), inputReg(_inputReg) {}
+
 //---------------------------------------------//
 //---------------- Module Context -------------//
 //---------------------------------------------//
@@ -47,9 +51,9 @@ void moduleContext::handleTempState(const std::string& stateName, const stateCon
     while(tmpStatePresent){
         std::visit(functional::overload{
         [&](expressionStateInfo& st) {tmpStatePresent = false;},
-        [&](functionStateInfo& st) {tmpStatePresent = false;},
+        [&](functionCallStateInfo& st) {tmpStatePresent = false;},
+        [&](functionWaitStateInfo& st) {tmpStatePresent = false;},
         [&](branchStateInfo& st) {tmpStatePresent = false;},
-        [&](conditionalStateInfo& st) {tmpStatePresent = false;},
         [&](temporaryStateInfo& st) {statesToChange.insert(statesToChange.end(), st.jumpToHere.begin(), st.jumpToHere.end());
                                     this->states.pop_back();
                                     }
@@ -58,9 +62,9 @@ void moduleContext::handleTempState(const std::string& stateName, const stateCon
     for(auto name : statesToChange){
         std::visit(functional::overload{
         [&](expressionStateInfo& st) {st.nxtState = stateName;},
-        [&](functionStateInfo& st) {/*TODO*/},
+        [&](functionCallStateInfo& st) {/*TODO*/},
+        [&](functionWaitStateInfo& st) {/*TODO*/},
         [&](branchStateInfo& st) {st.jumpLabel = stateName;},
-        [&](conditionalStateInfo& st) {/*TODO*/},
         [&](temporaryStateInfo& st) {}
         }, this->findState(name).getState());
     }
@@ -108,6 +112,13 @@ std::string moduleContext::genTmpVar(const std::string& varName){
     return varName + std::to_string(this->varCount++);
 }
 
+void moduleContext::genListOfVars(std::vector<std::string>& varNames){
+    for(auto& var : varNames){
+        var += varCount;
+    }
+    varCount++;
+}
+
 std::string moduleContext::genStateName(const std::string& stateName){
     return stateName + std::to_string(stateCount++);;
 }
@@ -138,6 +149,14 @@ void moduleContext::modifyNextState(std::string stateName, std::string nextState
 
 }
 
+bool moduleContext::findSubModule(std::string moduleName){
+    return this->subModules.count(moduleName);
+}
+
+subModuleInfo& moduleContext::getSubModuleInfo(std::string moduleName){
+    return this->subModules[moduleName];
+}
+
 std::string moduleContext::printVerilog(){
     std::string r = "";
     r += ("module " + this->moduleName + " "); // add initial module name and preamble
@@ -151,18 +170,63 @@ std::string moduleContext::printVerilog(){
 
     //print standard variables
     r += ("reg [15:0] state;\n\n");
+
     //print program variables;
     for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
         std::string varWidth = data.width == 32 ? "[31:0] " : "" ;
         r += ("reg " + varWidth + name + ";\n"); //TODO change to include arrays
     }
+    for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
+        std::string varWidth = data.width == 32 ? "[31:0] " : "" ;
+        r += ("reg " + varWidth + name + "_next;\n"); //TODO change to include arrays
+    }
+    r += "reg [31:0] d_out_next;\n"
+    "reg done_next;\n";
+
+    r+= "\n\n";
+
+    //submodule instatiations
+    for(auto const& [name, info] : this->subModules ){
+        std::string subModuleInputs;
+        std::string inputDecl;
+        for(auto const& [input, reg] : info.inputReg){
+            subModuleInputs += "." + input + "(" + reg + "),\n";
+            inputDecl += "reg [31:0] " + reg + ";\n";
+        }
+
+        //submodule variables
+        r += "reg " + info.startSignal + ";\n"
+        "reg " + info.doneSignal + ";\n"
+        "wire " + info.outDataWire + ";\n" + 
+        inputDecl + "\n";
+
+        //connecting wires
+        r += name + " " + info.moduleIdentifier +"(\n"
+        ".clk(clk),\n"
+        ".resetn(resetn),\n" + 
+        subModuleInputs +
+        ".start(" + info.startSignal + "),\n"
+        ".done(" + info.doneSignal + "),\n"
+        ".d_out(" + info.outDataWire + "))\n\n";
+
+        // dealing with done signals
+        r += "always @(posedge " + info.doneSignal + ") begin\n"
+        "case(state)\n";
+
+        r += "default:;\nendcase\n\n";
+    }
     
     // always @ logic: update state
-    r += "\nalways @ (posedge clk or negedge resetn) begin\n"
+    r += "\nalways_ff @ (posedge clk or negedge resetn) begin\n"
     "if(!resetn)\n"
     "\tstate <= 16'd0;\n"
-    "else begin\n"
-    "case (state)\n"
+    "else begin\n";
+    for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
+        r += (name + " <= " + name + "_next;\n"); //TODO change to include arrays
+    }
+    r += "d_out <= d_out_next;\n"
+    "done <= done_next;\n";
+    r += "case (state)\n"
     "16'd0: state <= start ? " + this->states[0].getStateName() + " : 16'd0;\n";
     for(std::vector<stateInfo>::iterator it = this->states.begin(); it != this->states.end(); it++){
         if (it == (std::prev(this->states.end())))
@@ -176,11 +240,17 @@ std::string moduleContext::printVerilog(){
     r += "endcase\nend\n"
     "end\n\n";
     // state logic
-    r += "always @ (state) begin\n"
-    "case (state)\n"
+    r += "always_comb begin\n";
+    for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
+        r += (name + "_next = " + name + ";\n"); //TODO change to include arrays
+    }
+    r += "d_out_next = d_out;\n"
+    "done_next = done;\n";
+
+    r += "case (state)\n"
     "16'd0: begin\n"
-    "\tdone <= 0;\n"
-    "\td_out <= 0;\n"
+    "\tdone_next = 0;\n"
+    "\td_out_next = 0;\n"
     "end\n";
 
     
@@ -206,6 +276,10 @@ std::string moduleContext::printParams(){
         out += "parameter " + st.getStateName() + " = 16'd" + std::to_string(counter++) + ";\n";
     }
     return out;
+}
+
+bool moduleContext::operator== (std::string _moduleName){
+    return this->moduleName == _moduleName;
 }
 
 
@@ -247,4 +321,31 @@ void systemContext::addModule(std::string name, std::vector<std::string> inputs)
         modules.push_back(moduleContext(name));
     else
         modules.push_back(moduleContext(name, inputs));
+}
+
+moduleContext& systemContext::findModule(std::string moduleName){
+    std::vector<moduleContext>::iterator m = std::find(this->modules.begin(), this->modules.end(), moduleName);
+    if(m == this->modules.end()) throw std::runtime_error("Module not found");
+    return *(m);
+}
+
+subModuleInfo systemContext::findFuncCall(std::string funcName){
+    
+    if(this->getCurrentModule().findSubModule(funcName)){
+        return this->getCurrentModule().getSubModuleInfo(funcName);
+    } else {
+        moduleContext& m = this->findModule(funcName);
+        std::vector<std::string> inputs = m.getInputs();
+        std::vector<std::string> subModuleVars {funcName, funcName +" _start", funcName +" _done", funcName +" _out"};
+        subModuleVars.insert(subModuleVars.end(), inputs.begin(), inputs.end());
+        this->getCurrentModule().genListOfVars(subModuleVars);
+        std::map<std::string, std::string> inputMap;
+        for(int i = 0; i < inputs.size(); i++){
+            inputMap[inputs[i]] = subModuleVars[i + 4];
+        }
+        
+        subModuleInfo s = subModuleInfo(subModuleVars[0], subModuleVars[1],subModuleVars[2], subModuleVars[3], inputMap);
+        this->getCurrentModule().getSubModuleInfo(funcName) = s;
+        return s;
+    }
 }

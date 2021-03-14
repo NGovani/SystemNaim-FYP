@@ -164,6 +164,31 @@ void assignment_expression::convertToIL(systemContext& ctx){
     
 }
 
+void function_call::convertToIL(systemContext& ctx){
+
+    // grab name of functions
+    std::string functionName;
+    expressionStateInfo e;
+    ctx.addExprState(e);
+    if(this->expr == NULL) throw std::runtime_error("function name empty");
+    this->expr->convertToIL(ctx);
+    std::visit(functional::overload{
+        [&](std::string& x) {functionName = x;},
+        [&](int& x) {throw std::runtime_error("Unexpected constant on function call");}
+    }, ctx.getExprState().op1);
+
+    subModuleInfo s = ctx.findFuncCall(functionName);
+    functionCallStateInfo call;
+    call.startSignal = s.startSignal;
+
+
+
+}
+
+
+    // expressionStateInfo& e = ctx.getExprState();
+    // e.op1 = expressionTerm(identifier);
+    // e.cmd = ExpressionOperator::MOV;
 //assignment_expression
 
 // void assignment_expression::printMips(compilerContext& ctx, std::ostream& stream){

@@ -41,21 +41,30 @@ struct expressionStateInfo{
 };
 
 
-struct functionStateInfo{};
+struct functionCallStateInfo{// state for calling a function: in the future might be used to call multiple functions
+    std::string startSignal;
+    std::map<std::string, std::string> inputs; //key = module input reg, val = variable being passed 
+}; 
+
+struct functionWaitStateInfo{ // state for waiting on a function/s after they have been called
+    std::string startSignal;
+    std::string doneSignal;
+};
+
 struct branchStateInfo{
     std::string condVar; //If this has a value then this is a conditional branch
     std::string jumpLabel; // label to jump to, if no condition this is auto taken
 
     std::string nxtState; // used if this state needs to go to another state after its complete
 };
-struct conditionalStateInfo{
 
-};
 
 struct temporaryStateInfo{  // Empty state, used as a placeholder for states which need to jump to something after their operation is over
     std::vector<std::string> jumpToHere; //list of states which jump to this state
 };
-using stateContainer = std::variant<expressionStateInfo, functionStateInfo, branchStateInfo, conditionalStateInfo, temporaryStateInfo>;
+
+
+using stateContainer = std::variant<expressionStateInfo, functionCallStateInfo, functionWaitStateInfo, branchStateInfo, temporaryStateInfo>;
 
 class stateInfo{
 private:

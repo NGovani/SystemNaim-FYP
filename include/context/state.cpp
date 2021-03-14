@@ -10,7 +10,7 @@
 
 // prints the state logic for a given expression
 std::string createExpressionVerilog(expressionStateInfo st){
-    std::string exprString = "\t" + st.r + " = ";
+    std::string exprString = "\t" + st.r + "_next = ";
 
     std::visit(functional::overload{
         [&](std::string& x) {exprString += x;},
@@ -71,27 +71,42 @@ std::string createExpressionVerilog(expressionStateInfo st){
     return exprString;
 }
 
+
+//--------STATE LOGIC-----//
 std::string handleStateToVerilog(expressionStateInfo st){
     std::string exprString = createExpressionVerilog(st);
     if(st.returnState){
-        exprString += "\tdone = 1'b1;\n";
+        exprString += "\tdone_next = 1'b1;\n";
     }
     return exprString;
 }
 
-std::string handleStateToVerilog(functionStateInfo st){}
+
+
+std::string handleStateToVerilog(functionCallStateInfo st){
+    std::string returnString;
+    for(auto const& [reg, input] : st.inputs){
+        returnString += "\t" + reg + " = " + input + ";\n";
+    }
+    returnString += "\t" + st.startSignal + " = 1'd1;\n";
+}
+std::string handleStateToVerilog(functionWaitStateInfo st){
+    return "\t" + st.startSignal + " = 1'd0;\n";
+}
 
 std::string handleStateToVerilog(branchStateInfo st){
     return ";\n";
 }
-std::string handleStateToVerilog(conditionalStateInfo st){}
+
 std::string handleStateToVerilog(temporaryStateInfo st){
     return ";\n";
 }
 
+
+//-----STATE TRANSITION LOGIC-----//
 std::string handleStateChange(expressionStateInfo st, const std::string& nextState){
     if(st.returnState){
-        return "state <= 16'd0;\n";
+        return "\tstate <= 16'd0;\n";
     } else if (!st.nxtState.empty()) {
         return "\tstate <= " + st.nxtState + ";\n";
     }
@@ -100,7 +115,14 @@ std::string handleStateChange(expressionStateInfo st, const std::string& nextSta
     }
 }
 
-std::string handleStateChange(functionStateInfo st, const std::string& nextState){}
+std::string handleStateChange(functionCallStateInfo st, const std::string& nextState){
+    return "\tstate <= " + nextState + ";\n";
+}
+
+
+std::string handleStateChange(functionWaitStateInfo st, const std::string& nextState){
+    return "\tstate <= " +  st.doneSignal + " ? " + nextState + " : state;\n";
+}
 
 std::string handleStateChange(branchStateInfo st, const std::string& nextState){
     if(!st.condVar.empty()){
@@ -110,11 +132,12 @@ std::string handleStateChange(branchStateInfo st, const std::string& nextState){
     }
 }
 
-std::string handleStateChange(conditionalStateInfo st, const std::string& nextState){}
 
 std::string handleStateChange(temporaryStateInfo st, const std::string& nextState){
     return "\tstate <= " + nextState + ";\n";
 }
+
+
 
 std::string stateInfo::printVerilogState(){
     std::string r;

@@ -6,10 +6,12 @@ extern "C"{
 }
 #include "stdlib.h"
 #include "time.h"
+#include <string>
 
 int main(int argc, char** argv){
     srand(time(NULL));
     Verilated::commandArgs(argc, argv);
+    int passed = 0, failed = 0;
     for(int i = 0; i < 20; ++i){
         Vfunc* top = new Vfunc;
         top->start = 0;
@@ -33,24 +35,27 @@ int main(int argc, char** argv){
             }
             if ((time % 10) == 0) {
                 top->clk = 0; // Toggle clock
-                top->eval();
             }
             if ((time % 10) == 5) {
                 top->clk = 1;
-                top->eval();
             }
+            
+            top->eval();
             time++;
         }
         if(func(in1,in2) == top->d_out ){
-            std::cout << "=======Test Passed ========" << std::endl;
-            std::cout << "Got: " << top->d_out << std::endl;
-            std::cout << "Expected: " << func(in1,in2) << std::endl;
-            std::cout << "Cycles: " << time << std::endl; 
+            std::cout << "=======Test Passed========" << std::endl;
+            passed++;
         } else {
-            std::cout << "=======Test Failed ========" << std::endl;
+            std::cout << "=======Test Failed========" << std::endl;
             std::cout << "Got: " << top->d_out << std::endl;
             std::cout << "Expected: " << func(in1,in2) << std::endl;
             std::cout << "Cycles: " << time << std::endl; 
+            failed++;
         }
     }
+    std::cout << "======Final Results=======" << std::endl;
+    std::cout << "Total Tests: " << passed + failed << std::endl;
+    std::cout << "Successful Tests: " << passed << std::endl;
+    std::cout << "Failed Tests: " << failed << std::endl;
 }
