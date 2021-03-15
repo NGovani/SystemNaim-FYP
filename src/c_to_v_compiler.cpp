@@ -18,13 +18,7 @@ int main(int argc, char* argv[]){
     try
     {
         ast->convertToIL(sysCtx);
-        std::cout << "======= Printing Verilog ======" << std::endl;
-        main_file.open("out/func.v");
-        main_file << sysCtx.getCurrentModule().printVerilog() << std::endl;
-        main_file.close();
-        param_file.open("out/func_params.vh");
-        param_file << sysCtx.getCurrentModule().printParams() << std::endl;
-        param_file.close();
+        sysCtx.printAllVerilog();
     }
     catch(const std::exception& e)
     {

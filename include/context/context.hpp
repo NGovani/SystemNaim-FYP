@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <sstream>
 #include <variant>
+#include <fstream>
 #include "state.hpp"
 
 //DeclaratorContext: used to hold information about variable and function declarations
@@ -45,11 +46,14 @@ struct subModuleInfo {
     std::string moduleIdentifier; // identifier within module
     std::string startSignal, doneSignal;
     std::string outDataWire; //name of wire for data out
+    std::vector<std::string> inputList; // maintains order of the inputs, contains name of registers for each input
     std::map<std::string, std::string> inputReg; //key = input name, val = reg in this module connected to input
-    std::map<std::string,std::string> stateOutReg; //key = state, val = reg to store data out
 
     subModuleInfo();
-    subModuleInfo(std::string _moduleIdentifier, std::string _startSignal, std::string _doneSignal, std::string _outDataWire, std::map<std::string, std::string> _inputReg );
+    subModuleInfo(std::string _moduleIdentifier, std::string _startSignal,
+                  std::string _doneSignal, std::string _outDataWire, 
+                  std::map<std::string, std::string> _inputReg, 
+                  std::vector<std::string> _inputList);
 };
 
 
@@ -99,6 +103,8 @@ public:
     //inputs
     std::vector<std::string> getInputs(){return this->inputs;}
 
+    //getters
+    std::string getName(){return moduleName;}
     bool operator== (std::string _moduleName);
 };
 
@@ -109,10 +115,14 @@ private:
     std::vector<moduleContext> modules; // holds all module data, including the states they have
     std::vector<declaratorContext> decCtx; // holds data for declarations
     std::vector<expressionStateInfo> exprStates; //used to create expression states across nodes.
+    std::vector<functionCallStateInfo> funcStates; // holds data for current function call
 public:
     expressionStateInfo& getExprState();
     void addExprState(expressionStateInfo e);
     void purgeExprState();
+    functionCallStateInfo& getFuncState();
+    void addFuncState(functionCallStateInfo f);
+    void purgeFuncState();
     declaratorContext& getDecCtx(); // get current declarator context
     void addDecCtx(); // add new element to decCtx vector
     void purgeDecCtx(); // remove last element from decCtx vector.
@@ -120,7 +130,7 @@ public:
     moduleContext& findModule(std::string moduleName);
     void addModule(std::string name, std::vector<std::string> inputs);
     subModuleInfo findFuncCall(std::string funcName); //checks if a function has been called by the current module
-    void addFuncCall(std::string funcName, std::string stateName, std::string regName);
+    void printAllVerilog();
 
 };
 

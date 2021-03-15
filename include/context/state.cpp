@@ -85,13 +85,21 @@ std::string handleStateToVerilog(expressionStateInfo st){
 
 std::string handleStateToVerilog(functionCallStateInfo st){
     std::string returnString;
-    for(auto const& [reg, input] : st.inputs){
-        returnString += "\t" + reg + " = " + input + ";\n";
+    for(auto& [reg, input] : st.inputs){
+        std::string val;
+        std::visit(functional::overload{
+            [&](std::string& x) {val = x;},
+            [&](int& x) {val = ("32'd"+ std::to_string(x));}
+        }, input);
+        returnString += "\t" + reg + "_next = " + val + ";\n";
     }
-    returnString += "\t" + st.startSignal + " = 1'd1;\n";
+    returnString += "\t" + st.startSignal + "_next = 1'd1;\n";
+    return returnString;
 }
 std::string handleStateToVerilog(functionWaitStateInfo st){
-    return "\t" + st.startSignal + " = 1'd0;\n";
+    std::string returnString = "\t" + st.startSignal + "_next = 1'd0;\n";
+    returnString += "\tif(" + st.doneSignal + ") " + st.d_outReg + "_next = " + st.d_outWire + ";\n";  
+    return returnString;
 }
 
 std::string handleStateToVerilog(branchStateInfo st){

@@ -168,21 +168,40 @@ void function_call::convertToIL(systemContext& ctx){
 
     // grab name of functions
     std::string functionName;
-    expressionStateInfo e;
-    ctx.addExprState(e);
+    expressionStateInfo e_tmp;
+    ctx.addExprState(e_tmp);
     if(this->expr == NULL) throw std::runtime_error("function name empty");
     this->expr->convertToIL(ctx);
     std::visit(functional::overload{
         [&](std::string& x) {functionName = x;},
         [&](int& x) {throw std::runtime_error("Unexpected constant on function call");}
     }, ctx.getExprState().op1);
-
+    ctx.purgeExprState();
     subModuleInfo s = ctx.findFuncCall(functionName);
     functionCallStateInfo call;
+    functionWaitStateInfo wait;
+    
+    //setup basic struct variables
     call.startSignal = s.startSignal;
+    call.inputList =  s.inputList;
 
+    wait.startSignal = s.startSignal;
+    wait.doneSignal = s.doneSignal;
+    wait.d_outWire = s.outDataWire;
+    wait.d_outReg = ctx.getCurrentModule().genTmpVar(functionName + "_outData");
+    ctx.getCurrentModule().addVariable(wait.d_outReg , 32);
 
+    ctx.addFuncState(call);
+    if(this->expr == NULL) throw std::runtime_error("function name empty");
+    this->list->convertToIL(ctx);
+    call = ctx.getFuncState();
 
+    ctx.getCurrentModule().addState("funcCall", call);
+    ctx.getCurrentModule().addState("funcWait", wait);
+    ctx.purgeFuncState();
+    expressionStateInfo& e = ctx.getExprState();
+    e.op1 = expressionTerm(wait.d_outReg);
+    e.cmd = ExpressionOperator::MOV;
 }
 
 

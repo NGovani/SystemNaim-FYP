@@ -43,12 +43,15 @@ struct expressionStateInfo{
 
 struct functionCallStateInfo{// state for calling a function: in the future might be used to call multiple functions
     std::string startSignal;
-    std::map<std::string, std::string> inputs; //key = module input reg, val = variable being passed 
+    std::vector<std::string> inputList;// used for compilation to share data between call node and arugement list node
+    std::map<std::string, expressionTerm> inputs; //key = module input reg, val = variable being passed 
 }; 
 
 struct functionWaitStateInfo{ // state for waiting on a function/s after they have been called
     std::string startSignal;
     std::string doneSignal;
+    std::string d_outWire;
+    std::string d_outReg;
 };
 
 struct branchStateInfo{

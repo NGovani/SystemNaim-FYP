@@ -38,8 +38,13 @@ varData::varData(int _width): width(_width), isArray(false), elements(1){}
 varData::varData(int _width, int _elements): width(_width), isArray(true), elements(_elements){}
 
 subModuleInfo::subModuleInfo(){}
-subModuleInfo::subModuleInfo(std::string _moduleIdentifier, std::string _startSignal, std::string _doneSignal, std::string _outDataWire, std::map<std::string, std::string> _inputReg ): moduleIdentifier(_moduleIdentifier), startSignal(_startSignal),
- doneSignal(_doneSignal), outDataWire(_outDataWire), inputReg(_inputReg) {}
+subModuleInfo::subModuleInfo(std::string _moduleIdentifier, std::string _startSignal, 
+                             std::string _doneSignal, std::string _outDataWire, 
+                             std::map<std::string, std::string> _inputReg,
+                             std::vector<std::string> _inputList)
+                             : moduleIdentifier(_moduleIdentifier), startSignal(_startSignal),
+                               doneSignal(_doneSignal), outDataWire(_outDataWire),
+                               inputReg(_inputReg), inputList(_inputList) {}
 
 //---------------------------------------------//
 //---------------- Module Context -------------//
@@ -114,7 +119,7 @@ std::string moduleContext::genTmpVar(const std::string& varName){
 
 void moduleContext::genListOfVars(std::vector<std::string>& varNames){
     for(auto& var : varNames){
-        var += varCount;
+        var += std::to_string(varCount);
     }
     varCount++;
 }
@@ -166,7 +171,7 @@ std::string moduleContext::printVerilog(){
     }
     r += ("\noutput reg done,\noutput reg [31:0] d_out\n);\n\n"); //module inputs and outputs
 
-    r += "`include \"" + this->moduleName + "_params.vh\"\n\n";
+    r += "`include \"" + this->moduleName + "_params.svh\"\n\n";
 
     //print standard variables
     r += ("reg [15:0] state;\n\n");
@@ -184,21 +189,17 @@ std::string moduleContext::printVerilog(){
     "reg done_next;\n";
 
     r+= "\n\n";
-
+    
     //submodule instatiations
     for(auto const& [name, info] : this->subModules ){
         std::string subModuleInputs;
-        std::string inputDecl;
         for(auto const& [input, reg] : info.inputReg){
             subModuleInputs += "." + input + "(" + reg + "),\n";
-            inputDecl += "reg [31:0] " + reg + ";\n";
         }
 
         //submodule variables
-        r += "reg " + info.startSignal + ";\n"
-        "reg " + info.doneSignal + ";\n"
-        "wire " + info.outDataWire + ";\n" + 
-        inputDecl + "\n";
+        r += "wire " + info.doneSignal + ";\n"
+        "wire [31:0] " + info.outDataWire + ";\n";
 
         //connecting wires
         r += name + " " + info.moduleIdentifier +"(\n"
@@ -207,14 +208,9 @@ std::string moduleContext::printVerilog(){
         subModuleInputs +
         ".start(" + info.startSignal + "),\n"
         ".done(" + info.doneSignal + "),\n"
-        ".d_out(" + info.outDataWire + "))\n\n";
-
-        // dealing with done signals
-        r += "always @(posedge " + info.doneSignal + ") begin\n"
-        "case(state)\n";
-
-        r += "default:;\nendcase\n\n";
+        ".d_out(" + info.outDataWire + "));\n\n";
     }
+
     
     // always @ logic: update state
     r += "\nalways_ff @ (posedge clk or negedge resetn) begin\n"
@@ -312,6 +308,19 @@ void systemContext::purgeExprState(){
     this->exprStates.pop_back();
 }
 
+functionCallStateInfo& systemContext::getFuncState(){
+    if(this->funcStates.empty()) throw std::runtime_error("exprStates Empty");
+    return this->funcStates.back();
+}
+
+void systemContext::addFuncState(functionCallStateInfo f){
+    this->funcStates.push_back(f);
+}
+
+void systemContext::purgeFuncState(){
+    this->funcStates.pop_back();
+}
+
 moduleContext& systemContext::getCurrentModule(){
     return modules.back();
 }
@@ -336,16 +345,40 @@ subModuleInfo systemContext::findFuncCall(std::string funcName){
     } else {
         moduleContext& m = this->findModule(funcName);
         std::vector<std::string> inputs = m.getInputs();
-        std::vector<std::string> subModuleVars {funcName, funcName +" _start", funcName +" _done", funcName +" _out"};
+        std::vector<std::string> subModuleVars {funcName, funcName +"_start", funcName +"_done", funcName +"_out"};
         subModuleVars.insert(subModuleVars.end(), inputs.begin(), inputs.end());
         this->getCurrentModule().genListOfVars(subModuleVars);
         std::map<std::string, std::string> inputMap;
         for(int i = 0; i < inputs.size(); i++){
             inputMap[inputs[i]] = subModuleVars[i + 4];
+            //now inputs contains the generated reg name
+            inputs[i] = subModuleVars[i + 4];
         }
         
-        subModuleInfo s = subModuleInfo(subModuleVars[0], subModuleVars[1],subModuleVars[2], subModuleVars[3], inputMap);
+        subModuleInfo s = subModuleInfo(subModuleVars[0], subModuleVars[1],subModuleVars[2], subModuleVars[3], inputMap, inputs);
         this->getCurrentModule().getSubModuleInfo(funcName) = s;
+        // add vars to module context
+        this->getCurrentModule().addVariable(s.startSignal, 1);
+        for(auto const& [in,reg]: s.inputReg){
+            this->getCurrentModule().addVariable(reg, 32);
+        }
         return s;
     }
+}
+
+void systemContext::printAllVerilog(){
+    std::ofstream outFile;
+    for(auto& mdl : this->modules){
+        std::string mainFile = "out/" + mdl.getName() + ".sv";
+        std::string paramFile = "out/" + mdl.getName() + "_params.svh";
+        outFile.open(mainFile);
+        outFile << mdl.printVerilog() << std::endl;
+        outFile.close();
+        outFile.open(paramFile);
+        outFile << mdl.printParams() << std::endl;
+        outFile.close();
+    }
+
+    
+
 }

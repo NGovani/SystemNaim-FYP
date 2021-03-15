@@ -1,4 +1,5 @@
 #include "../obj_dir/Vfunc.h"
+#include "../obj_dir/Vfoo.h"
 #include "verilated.h"
 #include "iostream"
 extern "C"{
