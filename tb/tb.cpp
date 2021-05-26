@@ -1,5 +1,4 @@
-#include "../obj_dir/Vfunc.h"
-#include "../obj_dir/Vfoo.h"
+#include "../obj_dir/Vhls_test_top.h"
 #include "verilated.h"
 #include "iostream"
 extern "C"{
@@ -14,9 +13,10 @@ int main(int argc, char** argv){
     Verilated::commandArgs(argc, argv);
     int passed = 0, failed = 0;
     for(int i = 0; i < 20; ++i){
-        Vfunc* top = new Vfunc;
+        Vhls_test_top* top = new Vhls_test_top;
         top->start = 0;
-        top->resetn = 0;
+        top->reset = 0;
+        top->clk_en = 0;
         int time = 0;
 
         // Inputs: numbers between 0 and 1000
@@ -27,12 +27,14 @@ int main(int argc, char** argv){
 
         while(top->done != true){
             if(time > 10 && time < 20){
-                top->resetn = 1;
+                top->reset = 0;
                 top->start = 1;
+                top->clk_en = 1;
             }
             if(time >= 20){
-                top->resetn = 1;
+                top->reset = 0;
                 top->start = 0;
+                top->clk_en = 1;
             }
             if ((time % 10) == 0) {
                 top->clk = 0; // Toggle clock
@@ -44,13 +46,15 @@ int main(int argc, char** argv){
             top->eval();
             time++;
         }
-        if(func(in1,in2) == top->d_out ){
+        if(hls_test_top(in1,in2) == top->d_out ){
             std::cout << "=======Test Passed========" << std::endl;
+            std::cout << "Inputs: " << in1 << " " << in2 << std::endl;
+            std::cout << "Output: " << hls_test_top(in1,in2) << std::endl;
             passed++;
         } else {
             std::cout << "=======Test Failed========" << std::endl;
             std::cout << "Got: " << top->d_out << std::endl;
-            std::cout << "Expected: " << func(in1,in2) << std::endl;
+            std::cout << "Expected: " << hls_test_top(in1,in2) << std::endl;
             std::cout << "Cycles: " << time << std::endl; 
             failed++;
         }

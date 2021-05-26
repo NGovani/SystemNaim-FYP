@@ -165,7 +165,7 @@ subModuleInfo& moduleContext::getSubModuleInfo(std::string moduleName){
 std::string moduleContext::printVerilog(){
     std::string r = "";
     r += ("module " + this->moduleName + " "); // add initial module name and preamble
-    r += ("(input clk,\ninput start,\ninput resetn,");
+    r += ("(input clk,\ninput clk_en,\ninput start,\ninput reset,");
     for(auto const& name : this->inputs){ // Might wanna also add var_next to be more safe
         r += ("\ninput [31:0] " + name + ","); //TODO change to include arrays
     }
@@ -179,11 +179,11 @@ std::string moduleContext::printVerilog(){
     //print program variables;
     for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
         std::string varWidth = data.width == 32 ? "[31:0] " : "" ;
-        r += ("reg " + varWidth + name + ";\n"); //TODO change to include arrays
+        r += ("reg " + varWidth + name + ";\n");
     }
     for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
         std::string varWidth = data.width == 32 ? "[31:0] " : "" ;
-        r += ("reg " + varWidth + name + "_next;\n"); //TODO change to include arrays
+        r += ("reg " + varWidth + name + "_next;\n"); 
     }
     r += "reg [31:0] d_out_next;\n"
     "reg done_next;\n";
@@ -204,7 +204,8 @@ std::string moduleContext::printVerilog(){
         //connecting wires
         r += name + " " + info.moduleIdentifier +"(\n"
         ".clk(clk),\n"
-        ".resetn(resetn),\n" + 
+        ".clk_en(clk_en),\n"
+        ".reset(reset),\n" + 
         subModuleInputs +
         ".start(" + info.startSignal + "),\n"
         ".done(" + info.doneSignal + "),\n"
@@ -213,11 +214,13 @@ std::string moduleContext::printVerilog(){
 
     
     // always @ logic: update state
-    r += "\nalways_ff @ (posedge clk or negedge resetn) begin\n"
-    "if(!resetn)\n"
+    r += "\nalways_ff @ (posedge clk or posedge reset) begin\n"
+    "if(reset)\n"
+    "\tstate <= 16'd0;\n"
+    "else if (!clk_en)\n"
     "\tstate <= 16'd0;\n"
     "else begin\n";
-    for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
+    for(auto const& [name, data] : this->variables){
         r += (name + " <= " + name + "_next;\n"); //TODO change to include arrays
     }
     r += "d_out <= d_out_next;\n"
@@ -235,9 +238,11 @@ std::string moduleContext::printVerilog(){
     r += "default: ;\n";
     r += "endcase\nend\n"
     "end\n\n";
-    // state logic
+
+
+    // in-state logic
     r += "always_comb begin\n";
-    for(auto const& [name, data] : this->variables){ // Might wanna also add var_next to be more safe
+    for(auto const& [name, data] : this->variables){
         r += (name + "_next = " + name + ";\n"); //TODO change to include arrays
     }
     r += "d_out_next = d_out;\n"

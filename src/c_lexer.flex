@@ -68,6 +68,7 @@ WHITESPACE          [ \t\r\n]+
 "do"		{ return T_DO; }
 "for"		{ return T_FOR; }
 "sizeof"    { return T_SIZEOF; }
+"split"     { return T_SPLIT;}
 
 
 {ASSIGNMENT_OPERATOR} { yylval.string = new std::string(yytext); return T_ASSIGNMENT_OP; }

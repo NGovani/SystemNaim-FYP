@@ -137,6 +137,21 @@ class initialiser_list : public BranchNode{
 	void convertToIL(systemContext& ctx){throw std::runtime_error("initialiser_list not implemented");}
 };
 
+
+class split_func_list: public BranchNode{
+	public:
+	split_func_list(NodePtr p){branches.push_back(p);}
+	void printTree(int n){
+		for(int i = 0; i < n; i++){
+			std::cout<< "|\t" ;
+		}
+		std::cout << "Split Functions:" << std::endl;
+		for(int i = 0; i < (int)branches.size(); i++){
+			branches[i]->printTree(n+1);
+		}
+	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("split_func_list not implemented");}
+};
 //--- NODES BELOW ARE NOT USED ---//
 
 

@@ -509,6 +509,26 @@ class function_call: public ExpressionNode{
 	
 };
 
+class split_func_item: public ExpressionNode{
+    public: 
+	std::string r; //return val
+	std::string name; //name of func
+    NodePtr list = NULL; //arg list
+    split_func_item(std::string a, std::string b, NodePtr c): r(a), name(b), list(c){}
+    void printTree(int n){
+		for(int i = 0; i < n; i++){
+			std::cout<< "|\t" ;
+		}
+		std::cout<< "Function: { Name: " << name;
+		std::cout<< ", Return variable: " << r << ", ";
+        if(list != NULL){list->printTree(n);}
+		std::cout << " }\n";
+    }
+	void convertToIL(systemContext& ctx){throw std::runtime_error("split_func_item not implemented");}
+	
+};
+
+
 class DotMemberOp : public ExpressionNode{
 	public:
 	std::string member;

@@ -34,18 +34,19 @@
 %token T_GOTO T_BREAK T_CONTINUE T_CASE T_DEFAULT T_SWITCH T_IF T_ELSE 
 %token T_RETURN T_WHILE T_DO T_FOR T_SIZEOF T_ENUM
 %token TYPEDEF_NAME T_IDENTIFIER ENUMERATION_CONSTANT
+%token T_SPLIT
 
 //TODO: sort out which are branch nodes and which are normal, maybe introduce expression nodes
 %type <bnode> translation_unit init_declarator_list declaration_specifier_list parameter_type_list block_item_list
-%type <bnode> argument_expression_list parameter_list initialiser_list struct_declaration_list struct_declarator_list enumerator_list
+%type <bnode> argument_expression_list parameter_list initialiser_list struct_declaration_list struct_declarator_list enumerator_list split_func_list
 %type <node> declarator direct_declarator init_declarator initialiser declaration declaration_specifiers struct_declarator
 %type <node> external_declaration function_definition compound_statement statement parameter_declaration enum_specifier enumerator
-%type <node> block_item expression_statement selection_statement iteration_statement labeled_statement struct_declaration
+%type <node> block_item expression_statement selection_statement iteration_statement labeled_statement split_statement struct_declaration
 %type <node> jump_statement typedef_declaration struct_or_union_specifier type_name abstract_declarator direct_abstract_declarator
 %type <enode> assignment_expression conditional_expression logical_or_expression logical_and_expression inclusive_or_expression
 %type <enode> exclusive_or_expression and_expression equality_expression relational_expression shift_expression additive_expression
 %type <enode> multiplicative_expression cast_expression unary_expression postfix_expression primary_expression expression
-%type <enode> constant_expression
+%type <enode> constant_expression split_func_item
 %type <number> FLOAT_CONSTANT INT_CONSTANT constant
 %type <string> TYPEDEF_NAME T_IDENTIFIER STRING_LITERAL T_ASSIGNMENT_OP assignment_operator
 %type <idlist> identifier_list
@@ -377,6 +378,21 @@ statement:
 		| selection_statement					{$$ = $1;}
 		| iteration_statement					{$$ = $1;}
 		| jump_statement						{$$ = $1;}
+		| split_statement						{$$ = $1;}
+		;
+
+split_statement:
+		T_SPLIT '{' split_func_list '}'			{ $$ = $3; }
+		;
+
+split_func_list:
+		split_func_item  	 				{$$ = new split_func_list($1);}
+		| split_func_list split_func_item 	{$$ = $1; $$->push($2);}
+		;
+
+split_func_item:
+		T_IDENTIFIER assignment_operator T_IDENTIFIER '(' ')' ';' 				{$$ = new split_func_item(*($1),*($3),NULL);}
+		| T_IDENTIFIER assignment_operator T_IDENTIFIER '(' argument_expression_list ')' ';' {$$ = new split_func_item(*($1),*($3),$5);}
 		;
 
 compound_statement:
