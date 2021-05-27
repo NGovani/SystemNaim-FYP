@@ -57,6 +57,16 @@ struct subModuleInfo {
 };
 
 
+struct splitFunctionStateInfo{
+    std::map<std::string, functionCallStateInfo> callStateList;
+    std::map<std::string, functionWaitStateInfo> waitStateList;
+    std::map<std::string, std::string> doneRegList;
+    std::map<std::string, expressionStateInfo> assignmentList;
+
+
+    splitFunctionStateInfo();
+};
+
 
 
 // moduleContext: keeps track of variables and states for a specific module.
@@ -116,6 +126,7 @@ private:
     std::vector<declaratorContext> decCtx; // holds data for declarations
     std::vector<expressionStateInfo> exprStates; //used to create expression states across nodes.
     std::vector<functionCallStateInfo> funcStates; // holds data for current function call
+    std::vector<splitFunctionStateInfo> splitFuncStates;
 public:
     expressionStateInfo& getExprState();
     void addExprState(expressionStateInfo e);
@@ -123,6 +134,9 @@ public:
     functionCallStateInfo& getFuncState();
     void addFuncState(functionCallStateInfo f);
     void purgeFuncState();
+    splitFunctionStateInfo& getSplitFuncState();
+    void addSplitFuncState(splitFunctionStateInfo s);
+    void purgeSplitFuncState();
     declaratorContext& getDecCtx(); // get current declarator context
     void addDecCtx(); // add new element to decCtx vector
     void purgeDecCtx(); // remove last element from decCtx vector.

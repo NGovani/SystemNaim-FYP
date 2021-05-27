@@ -50,12 +50,13 @@ int main(int argc, char** argv){
             std::cout << "=======Test Passed========" << std::endl;
             std::cout << "Inputs: " << in1 << " " << in2 << std::endl;
             std::cout << "Output: " << hls_test_top(in1,in2) << std::endl;
+            std::cout << "Cycles Taken: " << time/10 << std::endl;
             passed++;
         } else {
             std::cout << "=======Test Failed========" << std::endl;
             std::cout << "Got: " << top->d_out << std::endl;
             std::cout << "Expected: " << hls_test_top(in1,in2) << std::endl;
-            std::cout << "Cycles: " << time << std::endl; 
+            std::cout << "Cycles: " << time/10 << std::endl; 
             failed++;
         }
     }

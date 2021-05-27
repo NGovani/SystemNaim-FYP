@@ -192,8 +192,9 @@ void function_call::convertToIL(systemContext& ctx){
     ctx.getCurrentModule().addVariable(wait.d_outReg , 32);
 
     ctx.addFuncState(call);
-    if(this->expr == NULL) throw std::runtime_error("function name empty");
-    this->list->convertToIL(ctx);
+    if(this->list != NULL){ //list can be null
+        this->list->convertToIL(ctx);
+    }
     call = ctx.getFuncState();
 
     ctx.getCurrentModule().addState("funcCall", call);
@@ -202,6 +203,42 @@ void function_call::convertToIL(systemContext& ctx){
     expressionStateInfo& e = ctx.getExprState();
     e.op1 = expressionTerm(wait.d_outReg);
     e.cmd = ExpressionOperator::MOV;
+}
+
+
+void split_func_item::convertToIL(systemContext& ctx){
+    subModuleInfo s = ctx.findFuncCall(this->name);
+    functionCallStateInfo call;
+    functionWaitStateInfo wait;
+    
+    //setup basic struct variables
+    call.startSignal = s.startSignal;
+    call.inputList =  s.inputList;
+
+    wait.startSignal = s.startSignal;
+    wait.doneSignal = s.doneSignal;
+    wait.d_outWire = s.outDataWire;
+    wait.d_outReg = ctx.getCurrentModule().genTmpVar(this->name + "_outData");
+    std::string doneReg = ctx.getCurrentModule().genTmpVar(this->name + "_doneReg");
+    ctx.getCurrentModule().addVariable(wait.d_outReg , 32);
+    ctx.getCurrentModule().addVariable(doneReg , 1);
+
+    ctx.addFuncState(call);
+    if(this->list != NULL){ //list can be null
+        this->list->convertToIL(ctx);
+    }
+    call = ctx.getFuncState();
+
+    ctx.getSplitFuncState().callStateList[this->name] = call;
+    ctx.getSplitFuncState().waitStateList[this->name] = wait;
+    ctx.getSplitFuncState().doneRegList[this->name] = doneReg;
+    ctx.purgeFuncState();
+
+    expressionStateInfo e;
+    e.r = this->r;
+    e.op1 = expressionTerm(wait.d_outReg);
+    e.cmd = ExpressionOperator::MOV;
+    ctx.getSplitFuncState().assignmentList[this->name] = e;
 }
 
 

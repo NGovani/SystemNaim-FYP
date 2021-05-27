@@ -78,3 +78,31 @@ void parameter_list::convertToIL(systemContext& ctx){
     }
     ctx.getDecCtx().funcInputs = param_list;
 }
+
+
+void split_func_list::convertToIL(systemContext& ctx){
+    splitFunctionStateInfo s; //used to keep track of all data;
+    ctx.addSplitFuncState(s);
+    for(auto& func : this->branches ){
+        func->convertToIL(ctx);
+    }
+    s = ctx.getSplitFuncState();
+
+    splitFunctionCallStateInfo splitCall;
+    splitCall.funcList = s.callStateList;
+    splitCall.doneRegList = s.doneRegList;
+
+    splitFunctionWaitStateInfo splitWait;
+    splitWait.funcList = s.waitStateList;
+    splitWait.doneRegList = s.doneRegList;
+
+    ctx.purgeSplitFuncState();
+
+    ctx.getCurrentModule().addState("splitCall", splitCall);
+    ctx.getCurrentModule().addState("splitWait", splitWait);
+    
+    for(auto& [name, state] : s.assignmentList){ // add the assignment states at the end
+        ctx.getCurrentModule().addState("funcReturn", state);
+    }
+
+}

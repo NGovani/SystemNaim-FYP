@@ -45,13 +45,27 @@ struct functionCallStateInfo{// state for calling a function: in the future migh
     std::string startSignal;
     std::vector<std::string> inputList;// used for compilation to share data between call node and arugement list node
     std::map<std::string, expressionTerm> inputs; //key = module input reg, val = variable being passed 
-}; 
+};
+
 
 struct functionWaitStateInfo{ // state for waiting on a function/s after they have been called
     std::string startSignal;
     std::string doneSignal;
     std::string d_outWire;
     std::string d_outReg;
+};
+
+
+//Split function 
+
+struct splitFunctionCallStateInfo{// state for calling a function: in the future might be used to call multiple functions
+    std::map<std::string, functionCallStateInfo> funcList;
+    std::map<std::string, std::string> doneRegList;
+}; 
+
+struct splitFunctionWaitStateInfo{ // state for waiting on a function/s after they have been called
+    std::map<std::string, functionWaitStateInfo> funcList;
+    std::map<std::string, std::string> doneRegList; // used for state changes, all done signals must be high
 };
 
 struct branchStateInfo{
@@ -67,7 +81,7 @@ struct temporaryStateInfo{  // Empty state, used as a placeholder for states whi
 };
 
 
-using stateContainer = std::variant<expressionStateInfo, functionCallStateInfo, functionWaitStateInfo, branchStateInfo, temporaryStateInfo>;
+using stateContainer = std::variant<expressionStateInfo, functionCallStateInfo, functionWaitStateInfo, branchStateInfo, temporaryStateInfo, splitFunctionCallStateInfo, splitFunctionWaitStateInfo>;
 
 class stateInfo{
 private:

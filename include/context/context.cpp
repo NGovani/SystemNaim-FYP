@@ -37,6 +37,10 @@ varData::varData(){}
 varData::varData(int _width): width(_width), isArray(false), elements(1){} 
 varData::varData(int _width, int _elements): width(_width), isArray(true), elements(_elements){}
 
+//---------------------------------------------//
+//--------------subModuleInfo------------------//
+//---------------------------------------------//
+
 subModuleInfo::subModuleInfo(){}
 subModuleInfo::subModuleInfo(std::string _moduleIdentifier, std::string _startSignal, 
                              std::string _doneSignal, std::string _outDataWire, 
@@ -45,6 +49,14 @@ subModuleInfo::subModuleInfo(std::string _moduleIdentifier, std::string _startSi
                              : moduleIdentifier(_moduleIdentifier), startSignal(_startSignal),
                                doneSignal(_doneSignal), outDataWire(_outDataWire),
                                inputReg(_inputReg), inputList(_inputList) {}
+
+
+//---------------------------------------------//
+//-------------splitFunctionState--------------//
+//---------------------------------------------//
+
+splitFunctionStateInfo::splitFunctionStateInfo(){}
+
 
 //---------------------------------------------//
 //---------------- Module Context -------------//
@@ -58,6 +70,8 @@ void moduleContext::handleTempState(const std::string& stateName, const stateCon
         [&](expressionStateInfo& st) {tmpStatePresent = false;},
         [&](functionCallStateInfo& st) {tmpStatePresent = false;},
         [&](functionWaitStateInfo& st) {tmpStatePresent = false;},
+        [&](splitFunctionCallStateInfo& st) {tmpStatePresent = false;},
+        [&](splitFunctionWaitStateInfo& st) {tmpStatePresent = false;},
         [&](branchStateInfo& st) {tmpStatePresent = false;},
         [&](temporaryStateInfo& st) {statesToChange.insert(statesToChange.end(), st.jumpToHere.begin(), st.jumpToHere.end());
                                     this->states.pop_back();
@@ -69,6 +83,8 @@ void moduleContext::handleTempState(const std::string& stateName, const stateCon
         [&](expressionStateInfo& st) {st.nxtState = stateName;},
         [&](functionCallStateInfo& st) {/*TODO*/},
         [&](functionWaitStateInfo& st) {/*TODO*/},
+        [&](splitFunctionCallStateInfo& st) {/*TODO*/},
+        [&](splitFunctionWaitStateInfo& st) {/*TODO*/},
         [&](branchStateInfo& st) {st.jumpLabel = stateName;},
         [&](temporaryStateInfo& st) {}
         }, this->findState(name).getState());
@@ -81,7 +97,7 @@ void moduleContext::handleTempState(const std::string& stateName, const stateCon
 //           in the states vector
 std::string moduleContext::addState(const std::string& stateName, const stateContainer& stateData){
     std::string uniqueName = stateName + std::to_string(stateCount++);
-    if(!this->states.empty()){
+    if(!this->states.empty()){ // if there are states in the module, first consume all temporay states
         std::visit(functional::overload{
             [&](temporaryStateInfo& st) {
                 if(auto chk = std::get_if<temporaryStateInfo>(&stateData))
@@ -256,12 +272,7 @@ std::string moduleContext::printVerilog(){
 
     
     for(std::vector<stateInfo>::iterator it = this->states.begin(); it != this->states.end(); it++){
-        if (it == (std::prev(this->states.end())))
-            r+= it->printVerilogState();
-        else{
-            auto nx = std::next(it, 1);
-            r+= it->printVerilogState();
-        }
+        r+= it->printVerilogState();
     }
     r += "default: ;\n";
 
@@ -326,6 +337,19 @@ void systemContext::purgeFuncState(){
     this->funcStates.pop_back();
 }
 
+splitFunctionStateInfo& systemContext::getSplitFuncState(){
+    if(this->splitFuncStates.empty()) throw std::runtime_error("splitFuncStates Empty");
+    return this->splitFuncStates.back();
+}
+
+void systemContext::addSplitFuncState(splitFunctionStateInfo s){
+    this->splitFuncStates.push_back(s);
+}
+
+void systemContext::purgeSplitFuncState(){
+    this->splitFuncStates.pop_back();
+}
+
 moduleContext& systemContext::getCurrentModule(){
     return modules.back();
 }
@@ -339,7 +363,7 @@ void systemContext::addModule(std::string name, std::vector<std::string> inputs)
 
 moduleContext& systemContext::findModule(std::string moduleName){
     std::vector<moduleContext>::iterator m = std::find(this->modules.begin(), this->modules.end(), moduleName);
-    if(m == this->modules.end()) throw std::runtime_error("Module not found");
+    if(m == this->modules.end()) throw std::runtime_error("Module not found: " + moduleName);
     return *(m);
 }
 
@@ -383,7 +407,4 @@ void systemContext::printAllVerilog(){
         outFile << mdl.printParams() << std::endl;
         outFile.close();
     }
-
-    
-
 }

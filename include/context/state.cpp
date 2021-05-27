@@ -96,9 +96,29 @@ std::string handleStateToVerilog(functionCallStateInfo st){
     returnString += "\t" + st.startSignal + "_next = 1'd1;\n";
     return returnString;
 }
+
 std::string handleStateToVerilog(functionWaitStateInfo st){
     std::string returnString = "\t" + st.startSignal + "_next = 1'd0;\n";
-    returnString += "\tif(" + st.doneSignal + ") " + st.d_outReg + "_next = " + st.d_outWire + ";\n";  
+        returnString += "\t" + st.d_outReg + "_next = " + st.doneSignal + " ? " + st.d_outWire + " : " + st.d_outReg + ";\n";  
+    return returnString;
+}
+
+std::string handleStateToVerilog(splitFunctionCallStateInfo st){
+    std::string returnString;
+    for(auto& [name, val] : st.funcList){
+        returnString += handleStateToVerilog(val);
+        returnString += "\t" + st.doneRegList[name] + "_next = 1'd0;\n";
+    }
+    return returnString;
+}
+
+std::string handleStateToVerilog(splitFunctionWaitStateInfo st){
+    std::string returnString;
+    for(auto& [name, val] : st.funcList){
+        returnString += "\t" + val.startSignal + "_next = 1'd0;\n";
+        returnString += "\t" + val.d_outReg + "_next = " + val.doneSignal + " ? " + val.d_outWire + " : " + val.d_outReg + ";\n"; 
+        returnString += "\t" + st.doneRegList[name] + "_next = " + val.doneSignal + " ? 1'b1 : " + st.doneRegList[name] + ";\n"; 
+    }
     return returnString;
 }
 
@@ -130,6 +150,19 @@ std::string handleStateChange(functionCallStateInfo st, const std::string& nextS
 
 std::string handleStateChange(functionWaitStateInfo st, const std::string& nextState){
     return "\tstate <= " +  st.doneSignal + " ? " + nextState + " : state;\n";
+}
+
+std::string handleStateChange(splitFunctionCallStateInfo st, const std::string& nextState){
+    return "\tstate <= " + nextState + ";\n";
+}
+
+std::string handleStateChange(splitFunctionWaitStateInfo st, const std::string& nextState){
+    std::string doneRegString;
+     for(auto const& [name, data] : st.doneRegList){ // Might wanna also add var_next to be more safe
+        doneRegString += data + " && " ;
+    }
+    doneRegString += "1'd1";
+    return "\tstate <= " + doneRegString  + " ? " + nextState + " : state;\n";
 }
 
 std::string handleStateChange(branchStateInfo st, const std::string& nextState){

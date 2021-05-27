@@ -23,10 +23,10 @@ int hls_test_top(int a, int b){
     int s = 4;
     int holda;
     int holdb;
-    //split{
+    split{
         holda = hls_test_func_a(4);
         holdb = hls_test_func_b(3);
-    //}
+    }
     s = s + a + b;
     return holda + holdb + s;
 }
