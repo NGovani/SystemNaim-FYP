@@ -56,6 +56,27 @@ struct subModuleInfo {
                   std::vector<std::string> _inputList);
 };
 
+struct remoteModuleInfo {
+    std::string moduleIdentifier; // identifier within module
+    std::string startSignal, doneSignal;
+    std::string outDataWire; //name of wire for data out
+    std::vector<std::string> inputList; // maintains order of the inputs, contains name of registers for each input
+    std::map<std::string, std::string> inputReg; //key = input name, val = reg in this module connected to input
+    
+    // Variables below are used to connect module to mux
+    int opcode;
+    std::string selectWire;
+    std::string dataaWire, databWire;
+    std::string returnDataWire;
+    std::string returnDataValidWire;
+
+
+    remoteModuleInfo();
+    remoteModuleInfo(std::string _moduleIdentifier, std::string _startSignal,
+                  std::string _doneSignal, std::string _outDataWire, 
+                  std::map<std::string, std::string> _inputReg, 
+                  std::vector<std::string> _inputList);
+};
 
 struct splitFunctionStateInfo{
     std::map<std::string, functionCallStateInfo> callStateList;
@@ -80,6 +101,7 @@ private:
     int varCount;
     void handleTempState(const std::string& stateName, const stateContainer& stateData);
     std::map<std::string, subModuleInfo> subModules;
+    std::map<std::string, remoteModuleInfo> remoteModules;
 public:
     moduleContext(std::string _moduleName): stateCount(0), varCount(0), moduleName(_moduleName) {}
     moduleContext(std::string _moduleName, std::vector<std::string> _inputs): stateCount(0), varCount(0), moduleName(_moduleName), inputs(_inputs) {}
@@ -109,6 +131,7 @@ public:
     // output
     std::string printVerilog();
     std::string printParams();
+    std::string printRemoteVerilog();
 
     //inputs
     std::vector<std::string> getInputs(){return this->inputs;}
@@ -127,6 +150,8 @@ private:
     std::vector<expressionStateInfo> exprStates; //used to create expression states across nodes.
     std::vector<functionCallStateInfo> funcStates; // holds data for current function call
     std::vector<splitFunctionStateInfo> splitFuncStates;
+    std::map<std::string, int > remoteModules; //List of all remote modules to be turned into sv files
+    int opcode_count = 1;
 public:
     expressionStateInfo& getExprState();
     void addExprState(expressionStateInfo e);

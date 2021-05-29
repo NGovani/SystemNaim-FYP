@@ -118,6 +118,22 @@ class split_func_list: public BranchNode{
 	void convertToIL(systemContext& ctx);
 };
 
+class split_fpga_func_list: public BranchNode{
+	public:
+	split_fpga_func_list(NodePtr p){branches.push_back(p);}
+	void printTree(int n){
+		for(int i = 0; i < n; i++){
+			std::cout<< "|\t" ;
+		}
+		std::cout << "Split FPGA Functions:" << std::endl;
+		for(int i = 0; i < (int)branches.size(); i++){
+			branches[i]->printTree(n+1);
+		}
+	}
+	void convertToIL(systemContext& ctx){throw std::runtime_error("split_fpga_func_list not implemented");}
+};
+
+
 
 // identifier_list: list of variable
 // Wierd function definition type

@@ -20,13 +20,11 @@ int hls_test_top(int a, int b){
     int s = 4;
     int holda;
     int holdb;
-    split{
+    split_fpga{
         holda = hls_test_func_a(4);
         holdb = hls_test_func_b(3);
     }
-    for(i = 0; i < 5; i = i + 1){
         s = s + a + b;
-        y = hls_test_func(2) + y;
-    }
+        y = holda + holdb;
     return s + y;
 }

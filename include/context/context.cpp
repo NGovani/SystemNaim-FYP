@@ -290,6 +290,88 @@ std::string moduleContext::printParams(){
     return out;
 }
 
+std::string moduleContext::printRemoteVerilog(){
+
+    std::string r = "";
+    r += ("module " + this->moduleName + "_remote "); // add initial module name and preamble
+    r += ("(input clk,\ninput clk_en,\ninput start,\ninput reset,");
+    for(auto const& name : this->inputs){ // Might wanna also add var_next to be more safe
+        r += ("\ninput [31:0] " + name + ","); //TODO change to include arrays
+    }
+    r += "\noutput reg done,\n"
+    "output reg [31:0] d_out\n"
+    "output reg select_out\n"
+    "output reg [31:0] dataa_out\n"
+    "output reg [31:0] datab_out\n"
+    "input data_from_remote\n"
+    "input data_from_remote_valid"
+    ");\n\n"; //module inputs and outputs
+
+    // params
+    r += "parameter S_IDLE = 2'd0, S_WAIT = 2'd1;\n";
+
+    //next states
+    r += "reg [2:0] state, state_next;\n"
+    "reg [31:0] d_out_next;\n"
+    "reg done_next;\n"
+    "reg select_out_next;\n"
+    "reg [31:0] dataa_out_next, datab_out_next;\n";
+
+    r+= "\n\n";
+
+    
+    // always @ logic: update registarts
+    r += "\nalways_ff @ (posedge clk or posedge reset) begin\n"
+    "if(reset)\n"
+    "\tstate <= S_IDLE;\n"
+    "else if (!clk_en)\n"
+    "\tstate <= S_IDLE;\n"
+    "else begin\n";
+    r += "d_out <= d_out_next;\n"
+    "done <= done_next;\n"
+    "state <= state_next;\n"
+    "select_out <= select_out_next;\n"
+    "dataa_out <= dataa_out_next;\n"
+    "datab_out <= datab_out_next;\n"
+    ;
+
+    r += "end\n"
+    "end\n\n";
+
+
+    // in-state logic
+    r += "always_comb begin\n";
+    r += "d_out_next = d_out;\n"
+    "done_next = 1'b0;\n"
+    "state_next = S_IDLE;\n"
+    "select_out_next = 1'b0;\n"
+    "dataa_out_next = dataa_out;\n"
+    "datab_out_next = datab_out;\n"
+    ;
+
+    r += "case (state)\n"
+    "S_IDLE: begin\n"
+    "\tstate_next = start ? S_WAIT : S_IDLE;\n"
+    "\tselect_out_next = start;\n";
+
+    std::string dataa_val = this->inputs.size() > 0 ? (" start ? " + this->inputs[0] + " : 32'd0;" ) : "32'd0"; 
+    std::string datab_val = this->inputs.size() > 1 ? (" start ? " + this->inputs[1] + " : 32'd0;" ) : "32'd0"; 
+    
+    r += "\tdataa_out_next = " + dataa_val + "\n";
+    r += "\tdatab_out_next = " + datab_val + "\n";
+    "end\n"
+    "S_WAIT: begin\n"
+    "\tstate_next = data_from_remote_valid ? S_IDLE : S_WAIT;\n"
+    "\tdone_next = data_from_remote_valid;\n"
+    "\td_out_next = data_from_remote_valid ? data_from_remote : 32'd0;\n"
+    ;    
+    r += "default: ;\n";
+
+    r += "endcase\nend\n\nendmodule\n";
+    return r;
+}
+
+
 bool moduleContext::operator== (std::string _moduleName){
     return this->moduleName == _moduleName;
 }
@@ -407,4 +489,13 @@ void systemContext::printAllVerilog(){
         outFile << mdl.printParams() << std::endl;
         outFile.close();
     }
+    if(!this->remoteModules.empty()){
+        for(auto& [mdl, op] : this->remoteModules){
+            moduleContext remMdl = this->findModule(mdl);
+            std::string remModuleFile = "out/" + remMdl.getName() + "_remote.sv";
+            outFile.open(remModuleFile);
+            
+        }
+    }
 }
+

@@ -528,6 +528,25 @@ class split_func_item: public ExpressionNode{
 	
 };
 
+class split_fpga_func_item: public ExpressionNode{
+    public: 
+	std::string r; //return val
+	std::string name; //name of func
+    NodePtr list = NULL; //arg list
+    split_fpga_func_item(std::string a, std::string b, NodePtr c): r(a), name(b), list(c){}
+    void printTree(int n){
+		for(int i = 0; i < n; i++){
+			std::cout<< "|\t" ;
+		}
+		std::cout<< "Off-Chip Function: { Name: " << name;
+		std::cout<< ", Return variable: " << r << ", ";
+        if(list != NULL){list->printTree(n);}
+		std::cout << " }\n";
+    }
+	void convertToIL(systemContext& ctx){{throw std::runtime_error("split_fpga_func_item not implemented");}}
+	
+};
+
 
 class DotMemberOp : public ExpressionNode{
 	public:

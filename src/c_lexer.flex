@@ -69,6 +69,7 @@ WHITESPACE          [ \t\r\n]+
 "for"		{ return T_FOR; }
 "sizeof"    { return T_SIZEOF; }
 "split"     { return T_SPLIT;}
+"split_fpga" {return T_SPLIT_FPGA;}
 
 
 {ASSIGNMENT_OPERATOR} { yylval.string = new std::string(yytext); return T_ASSIGNMENT_OP; }
