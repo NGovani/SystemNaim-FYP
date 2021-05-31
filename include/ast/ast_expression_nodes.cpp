@@ -241,6 +241,72 @@ void split_func_item::convertToIL(systemContext& ctx){
     ctx.getSplitFuncState().assignmentList[this->name] = e;
 }
 
+void split_fpga_func_item::convertToIL(systemContext& ctx){
+
+    //create remote module info
+    std::string funcName = this->name;
+    moduleContext& m = ctx.findModule(funcName);
+    std::vector<std::string> inputs = m.getInputs();
+    std::vector<std::string> subModuleVars {funcName, funcName +"_start",
+     funcName + "_done", funcName +"_out", funcName + "_start_out", funcName + "_dataa",
+     funcName + "_datab", funcName + "_return", funcName + "_returnValid"};
+    subModuleVars.insert(subModuleVars.end(), inputs.begin(), inputs.end());
+    ctx.getCurrentModule().genListOfVars(subModuleVars);
+    std::map<std::string, std::string> inputMap;
+    for(int i = 0; i < inputs.size(); i++){
+            //first create a map of input names to generated reg names
+            inputMap[inputs[i]] = subModuleVars[i + 9]; //offset of 9 since the first 9 elements are signal names
+            //then make inputs contains the generated reg name
+            inputs[i] = subModuleVars[i + 9];
+        }
+    int opcode = ctx.getOpcode();
+    remoteModuleInfo r = remoteModuleInfo(subModuleVars[0],subModuleVars[1],subModuleVars[2],
+     subModuleVars[3],subModuleVars[4],subModuleVars[5],
+     subModuleVars[6],subModuleVars[7],subModuleVars[8],
+     inputMap, inputs, opcode);
+
+    ctx.getCurrentModule().getRemoteModuleInfo(funcName) = r;
+    ctx.addRemoteModule(funcName, opcode); 
+    ctx.getCurrentModule().addVariable(r.startSignal, 1);
+    for(auto const& [in,reg]: r.inputReg){
+        ctx.getCurrentModule().addVariable(reg, 32);
+    }
+
+    //add function states
+
+    functionCallStateInfo call;
+    functionWaitStateInfo wait;
+    
+    //setup basic struct variables
+    call.startSignal = r.startSignal;
+    call.inputList =  r.inputList;
+
+    wait.startSignal = r.startSignal;
+    wait.doneSignal = r.doneSignal;
+    wait.d_outWire = r.outDataWire;
+    wait.d_outReg = ctx.getCurrentModule().genTmpVar(funcName + "_outData");
+    std::string doneReg = ctx.getCurrentModule().genTmpVar(funcName+ "_doneReg");
+    ctx.getCurrentModule().addVariable(wait.d_outReg , 32);
+    ctx.getCurrentModule().addVariable(doneReg , 1);
+
+    ctx.addFuncState(call);
+    if(this->list != NULL){ //list can be null
+        this->list->convertToIL(ctx);
+    }
+    call = ctx.getFuncState();
+
+    ctx.getSplitFuncState().callStateList[this->name] = call;
+    ctx.getSplitFuncState().waitStateList[this->name] = wait;
+    ctx.getSplitFuncState().doneRegList[this->name] = doneReg;
+    ctx.purgeFuncState();
+
+    expressionStateInfo e;
+    e.r = this->r;
+    e.op1 = expressionTerm(wait.d_outReg);
+    e.cmd = ExpressionOperator::MOV;
+    ctx.getSplitFuncState().assignmentList[this->name] = e;
+}
+
 
     // expressionStateInfo& e = ctx.getExprState();
     // e.op1 = expressionTerm(identifier);

@@ -76,4 +76,5 @@ clean :
 	@rm -rf tmp
 	@rm -rf include/ast/*.o
 	@rm -rf working
+	@rm -rf out/*
 	@echo "all clean"

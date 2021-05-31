@@ -73,9 +73,13 @@ struct remoteModuleInfo {
 
     remoteModuleInfo();
     remoteModuleInfo(std::string _moduleIdentifier, std::string _startSignal,
-                  std::string _doneSignal, std::string _outDataWire, 
+                  std::string _doneSignal, std::string _outDataWire,
+                  std::string _selectWire, std::string _dataaWire,
+                  std::string _databWire, std::string _returnDataWire,
+                  std::string _returnDataValidWire,
                   std::map<std::string, std::string> _inputReg, 
-                  std::vector<std::string> _inputList);
+                  std::vector<std::string> _inputList,
+                  int _opcode);
 };
 
 struct splitFunctionStateInfo{
@@ -127,6 +131,8 @@ public:
     //submodule map
     bool findSubModule(std::string moduleName);
     subModuleInfo& getSubModuleInfo(std::string moduleName);
+    
+    remoteModuleInfo& getRemoteModuleInfo(std::string moduleName);
 
     // output
     std::string printVerilog();
@@ -150,7 +156,7 @@ private:
     std::vector<expressionStateInfo> exprStates; //used to create expression states across nodes.
     std::vector<functionCallStateInfo> funcStates; // holds data for current function call
     std::vector<splitFunctionStateInfo> splitFuncStates;
-    std::map<std::string, int > remoteModules; //List of all remote modules to be turned into sv files
+    std::map<std::string, int> remoteModules; //List of all remote modules to be turned into sv files
     int opcode_count = 1;
 public:
     expressionStateInfo& getExprState();
@@ -170,6 +176,10 @@ public:
     void addModule(std::string name, std::vector<std::string> inputs);
     subModuleInfo findFuncCall(std::string funcName); //checks if a function has been called by the current module
     void printAllVerilog();
+    std::string printRemoteTopVerilog(); //print the remote top level file
+    std::string printHostTopVerilog(); //print the remote top level file
+    int getOpcode();
+    void addRemoteModule(std::string funcName, int opcode);
 
 };
 

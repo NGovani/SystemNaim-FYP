@@ -389,7 +389,7 @@ split_fpga_statement:
 
 
 split_fpga_func_list:
-		split_fpga_func_item			{$$ = new split_fpga_func_list($1);}
+		split_fpga_func_item			{$$ = new split_func_list($1);} //Don't need a new class since they perform the same purpose
 		| split_fpga_func_list split_func_item  {$$ = $1; $$->push($2);}
 		;
 

@@ -52,6 +52,25 @@ subModuleInfo::subModuleInfo(std::string _moduleIdentifier, std::string _startSi
 
 
 //---------------------------------------------//
+//--------------remoteModuleInfo------------------//
+//---------------------------------------------//                               
+
+remoteModuleInfo::remoteModuleInfo(){}
+remoteModuleInfo::remoteModuleInfo(std::string _moduleIdentifier, std::string _startSignal,
+                  std::string _doneSignal, std::string _outDataWire,
+                  std::string _selectWire, std::string _dataaWire,
+                  std::string _databWire, std::string _returnDataWire,
+                  std::string _returnDataValidWire,
+                  std::map<std::string, std::string> _inputReg, 
+                  std::vector<std::string> _inputList,
+                  int _opcode): moduleIdentifier(_moduleIdentifier), startSignal(_startSignal),
+                               doneSignal(_doneSignal), outDataWire(_outDataWire),             
+                               selectWire(_selectWire), dataaWire(_dataaWire), 
+                               databWire(_databWire), returnDataWire(_returnDataWire),
+                               returnDataValidWire(_returnDataValidWire), opcode(_opcode),
+                               inputReg(_inputReg), inputList(_inputList) {}
+
+//---------------------------------------------//
 //-------------splitFunctionState--------------//
 //---------------------------------------------//
 
@@ -178,6 +197,10 @@ subModuleInfo& moduleContext::getSubModuleInfo(std::string moduleName){
     return this->subModules[moduleName];
 }
 
+remoteModuleInfo& moduleContext::getRemoteModuleInfo(std::string moduleName){
+    return this->remoteModules[moduleName];
+}
+
 std::string moduleContext::printVerilog(){
     std::string r = "";
     r += ("module " + this->moduleName + " "); // add initial module name and preamble
@@ -185,7 +208,18 @@ std::string moduleContext::printVerilog(){
     for(auto const& name : this->inputs){ // Might wanna also add var_next to be more safe
         r += ("\ninput [31:0] " + name + ","); //TODO change to include arrays
     }
-    r += ("\noutput reg done,\noutput reg [31:0] d_out\n);\n\n"); //module inputs and outputs
+    r += "\noutput reg done,\noutput reg [31:0] d_out";
+    if(!this->remoteModules.empty()){
+        r += ",\n"
+        "output [7:0] opcode_out,\n"
+        "output [31:0] dataa_out,\n"
+        "output [31:0] datab_out,\n"
+        "output start_out,\n"
+        "input data_from_remote,\n"
+        "input data_from_remote_valid\n";
+    }
+
+    r += ");\n\n"; //module inputs and outputs
 
     r += "`include \"" + this->moduleName + "_params.svh\"\n\n";
 
@@ -228,7 +262,57 @@ std::string moduleContext::printVerilog(){
         ".d_out(" + info.outDataWire + "));\n\n";
     }
 
-    
+    for(auto const& [name, info] : this->remoteModules ){
+        std::string subModuleInputs;
+        for(auto const& [input, reg] : info.inputReg){
+            subModuleInputs += "." + input + "(" + reg + "),\n";
+        }
+
+        //submodule variables
+        r += "wire " + info.doneSignal + ";\n"
+        "wire [31:0] " + info.outDataWire + ";\n";
+
+        //connecting wires
+        r += name + " " + info.moduleIdentifier +"(\n"
+        ".clk(clk),\n"
+        ".clk_en(clk_en),\n"
+        ".reset(reset),\n" + 
+        subModuleInputs +
+        ".start(" + info.startSignal + "),\n"
+        ".done(" + info.doneSignal + "),\n"
+        ".d_out(" + info.outDataWire + "),\n"
+        ".select_out(" + info.selectWire + "),\n"
+        ".dataa_out(" + info.dataaWire + "),\n"
+        ".datab_out(" + info.databWire + "),\n"
+        ".data_from_remote(" + info.returnDataWire + "),\n"
+        ".data_from_remote_valid(" + info.returnDataValidWire + "),\n"
+        ");\n\n";
+
+    }
+
+    if(!this->remoteModules.empty()){
+        r += "sysNaim_master_mux mux0(\n"
+        "\t.clk(clk),\n"
+        "\t.start_out(start_out),\n"
+        "\t.opcode_out(opcode_out),\n"
+        "\t.dataa_out(dataa_out),\n"
+        "\t.datab_out(datab_out),\n"
+        "\t.data_from_remote(data_from_remote),\n"
+        "\t.data_from_remote_valid(data_from_remote_valid)";
+        
+        for(auto& [name, info] : this->remoteModules){
+            std::string op = std::to_string(info.opcode);
+            r += ",\n" //add new line from prev input
+            "\t.select_in" + op + "(" + info.selectWire + "),\n"
+            "\t.dataa_in" + op + "(" + info.dataaWire + "),\n"
+            "\t.datab_in" + op + "(" + info.databWire + "),\n"
+            "\t.data_from_remote_in" + op + "(" + info.returnDataWire + "),\n"
+            "\t.data_from_remote_valid_in" + op + "(" + info.returnDataValidWire + ")";
+        }
+
+        r += ");\n";
+    }   
+
     // always @ logic: update state
     r += "\nalways_ff @ (posedge clk or posedge reset) begin\n"
     "if(reset)\n"
@@ -270,7 +354,6 @@ std::string moduleContext::printVerilog(){
     "\td_out_next = 0;\n"
     "end\n";
 
-    
     for(std::vector<stateInfo>::iterator it = this->states.begin(); it != this->states.end(); it++){
         r+= it->printVerilogState();
     }
@@ -359,12 +442,11 @@ std::string moduleContext::printRemoteVerilog(){
     
     r += "\tdataa_out_next = " + dataa_val + "\n";
     r += "\tdatab_out_next = " + datab_val + "\n";
-    "end\n"
+    r += "end\n"
     "S_WAIT: begin\n"
     "\tstate_next = data_from_remote_valid ? S_IDLE : S_WAIT;\n"
     "\tdone_next = data_from_remote_valid;\n"
-    "\td_out_next = data_from_remote_valid ? data_from_remote : 32'd0;\n"
-    ;    
+    "\td_out_next = data_from_remote_valid ? data_from_remote : 32'd0;\n";    
     r += "default: ;\n";
 
     r += "endcase\nend\n\nendmodule\n";
@@ -436,6 +518,14 @@ moduleContext& systemContext::getCurrentModule(){
     return modules.back();
 }
 
+int systemContext::getOpcode(){
+    return opcode_count++;
+}
+
+void systemContext::addRemoteModule(std::string funcName, int opcode){
+    this->remoteModules[funcName] = opcode;
+}
+
 void systemContext::addModule(std::string name, std::vector<std::string> inputs){
     if(inputs.empty())
         modules.push_back(moduleContext(name));
@@ -466,8 +556,9 @@ subModuleInfo systemContext::findFuncCall(std::string funcName){
             inputs[i] = subModuleVars[i + 4];
         }
         
-        subModuleInfo s = subModuleInfo(subModuleVars[0], subModuleVars[1],subModuleVars[2], subModuleVars[3], inputMap, inputs);
-        this->getCurrentModule().getSubModuleInfo(funcName) = s;
+        subModuleInfo s = subModuleInfo(subModuleVars[0], subModuleVars[1],subModuleVars[2],
+         subModuleVars[3], inputMap, inputs);
+        this->getCurrentModule().getSubModuleInfo(funcName) = s; //adds submodule to submodule list
         // add vars to module context
         this->getCurrentModule().addVariable(s.startSignal, 1);
         for(auto const& [in,reg]: s.inputReg){
@@ -475,6 +566,273 @@ subModuleInfo systemContext::findFuncCall(std::string funcName){
         }
         return s;
     }
+}
+
+std::string systemContext::printRemoteTopVerilog(){
+    std::string r = "";
+    r += ("module sysNaim_remote_top"); // add initial module name and preamble
+    r += ("(input clk,\ninput clk_en,\ninput start,\ninput reset,");
+    r += "\noutput done,\n"
+    "output [31:0] result,\n"
+    "output avalon_clk,\n"
+    "input avalon_rst,\n"
+	"output [31:0] w_data,\n"
+	"output [2:0]  addr,\n"
+	"output	 	  w_en,\n"
+	"output		  r_en,\n"
+	"output 		  chipselect,\n"
+	"input  [31:0] r_data,\n"
+	"output reg avalon_spi_reset\n"
+    ");\n\n"; //module inputs and outputs
+
+    //signals between decoder and spi handler
+    r += "wire ready;\n"
+    "wire valid;\n"
+    "wire start_return;\n"
+    "wire [31:0] data;\n"
+    "wire [31:0] return_data;\n"
+    "wire [31:0] dataa;\n"
+    "wire [31:0] datab;\n"
+    "wire return_valid;\n\n";
+
+
+    //signals between decoder and mux
+    r +=   "wire [31:0] dataa;\n"
+    "wire [31:0] datab;\n"
+    "wire [7:0] opcode;\n"
+    "wire data_to_hls_valid;\n"
+    "wire [31:0] data_from_hls;\n"
+    "wire data_from_hls_valid;\n";
+
+    r += "assign done = data_from_hls_valid;\n"
+    "assign result = data_from_hls;\n";
+
+    for(auto& [name, opcode] : this->remoteModules){
+        r += "wire [31:0] start" + std::to_string(opcode) + ";\n"
+        "wire [31:0] dataa" + std::to_string(opcode) + ";\n"
+        "wire [7:0] datab" + std::to_string(opcode) + ";\n"
+        "wire data_from_remote" + std::to_string(opcode) + ";\n"
+        "wire [31:0] data_from_remote_valid" + std::to_string(opcode) + ";\n";
+    }
+
+
+
+    r += "spi_slave_handler s0("
+	"\t.clk(clk),\n"
+	"\t.reset(reset),\n"
+	"\t// custom interface\n"
+	"\t.ready(ready),\n"
+	"\t.valid(valid),\n"
+	"\t.data(data),\n"
+	"\t.start_return(start_return),\n"
+	"\t.return_data(return_data),\n"
+	"\t.return_valid(return_valid),\n"
+	"\t//Avalon-MM ports\n"
+	"\t.avalon_clk(avalon_clk),\n"
+	"\t.addr(addr),\n"
+	"\t.w_data(w_data),\n"
+	"\t.r_data(r_data),\n"
+	"\t.w_en(w_en),\n"
+	"\t.r_en(r_en),\n"
+	"\t.chipselect(chipselect),\n"
+	"\t.process_done()\n"
+    ");\n";
+
+    r += "instr_decoder i0(\n"
+	"\t.clk(clk),\n"
+	"\t.reset(reset),\n"
+	"\t.start(start),\n"
+	"\t// custom interface\n"
+	"\t.ready(ready),\n"
+	"\t.valid(valid),\n"
+	"\t.data(data),\n"
+	"\t.start_return(start_return),\n"
+	"\t.return_data(return_data),\n"
+	"\t.return_valid(return_valid),\n"
+	"\t//HLS program interface\n"
+	"\t.opcode(opcode),\n"
+	"\t.dataa(dataa),\n"
+	"\t.datab(datab),\n"
+	"\t.data_to_hls_valid(data_to_hls_valid),\n"
+	"\t.data_from_hls(data_from_hls),\n"
+	"\t.data_from_hls_valid(data_from_hls_valid)\n"
+	");";
+
+    r += "sysNaim_slave_mux mux0(\n"
+	"\t.clk(clk),\n"
+    "\t.start_in(data_to_hls_valid),\n"
+    "\t.opcode_in(opcode),\n"
+    "\t.dataa_in(dataa),\n"
+    "\t.datab_in(datab),\n"
+    "\t.data_to_host(data_from_hls),\n"
+    "\t.data_to_host_valid(data_from_hls_valid)";
+
+    for(int i = 1; i <= this->remoteModules.size(); i++ ){
+        std::string op = std::to_string(i);
+        r += ",\n" //add new line from prev input
+        "\t.start_out" + op +"(start" + op + "),\n"
+        "\t.dataa_out" + op +"(dataa" + op + "),\n"
+        "\t.datab_out" + op +"(datab" + op + "),\n"
+        "\t.data_from_remote" + op +"(data_from_remote" + op + "),\n"
+        "\t.data_from_remote_valid" + op +"(data_from_remote_valid" + op + ")";
+    }
+
+    r+= ");\n\n";
+
+    for(auto& [name, opcode] : this->remoteModules){
+        std::string op = std::to_string(opcode);
+        moduleContext m = this->findModule(name);
+        r += m.getName() + " m" + op+"(\n"
+        "\t.clk(clk),\n"
+        "\t.clk_en(clk_en),\n"
+        "\t.reset(reset),\n"
+        "\t.start(start" + op + "),\n"
+        "\t.done(data_from_remote_valid" + op + "),\n"
+        "\t.d_out(data_from_remote" + op + ")";
+        for(int i = 0; i < m.getInputs().size(); i++){
+            std::string wire = i == 0 ? "dataa" + op : "datab" + op;
+            r += ",\n"
+            "\t." + m.getInputs()[i] + "(" + wire + ")";
+        }
+        r+= ");\n\n";
+    }
+    
+    // always @ logic: update registarts
+    r += "\nalways_ff @ (posedge clk or posedge reset) begin\n"
+    "if(reset)\n"
+    "\tavalon_spi_reset <= 1'b1;\n"
+    "else if (!clk_en)\n"
+    "\tavalon_spi_reset <= 1'b1;\n"
+    "else\n"
+    "\tavalon_spi_reset <= 1'b0;\n"
+    "end\n\n";
+
+    r += "endmodule\n";
+    return r;
+}
+
+std::string systemContext::printHostTopVerilog(){
+        std::string r = "";
+    r += ("module sysNaim_host_top"); // add initial module name and preamble
+    r += ("(input clk,\ninput clk_en,\ninput start,\ninput reset,");
+    r += "\noutput done,\n"
+    "output [31:0] result,\n"
+    "output avalon_clk,\n"
+    "input avalon_rst,\n"
+	"output [31:0] w_data,\n"
+	"output [2:0]  addr,\n"
+	"output	 	  w_en,\n"
+	"output		  r_en,\n"
+	"output 	  chipselect,\n"
+	"input  [31:0] r_data,\n"
+	"output reg avalon_spi_reset\n"
+    ");\n\n"; //module inputs and outputs
+
+
+    //signals between decoder and spi handler
+    r += "wire ready;\n"
+    "wire valid;\n"
+    "wire start_return;\n"
+    "wire [31:0] data;\n"
+    "wire [31:0] return_data;\n"
+    "wire return_valid;\n\n";
+
+
+    //signals between decoder and mux
+    r +=   "wire [31:0] dataa_out;\n"
+    "wire [31:0] datab_out;\n"
+    "wire [31:0] start_out;\n"
+    "wire [7:0] opcode;\n"
+    "wire [31:0] data_to_hls;\n"
+    "wire data_to_hls_valid;\n";
+
+    r += "assign done = data_from_hls_valid;\n"
+    "assign result = data_from_hls;\n";
+
+    r += "spi_handler s0("
+	"\t.clk(clk),\n"
+	"\t.reset(reset),\n"
+	"\t// custom interface\n"
+	"\t.ready(ready),\n"
+	"\t.valid(valid),\n"
+	"\t.data(data),\n"
+	"\t.start_return(start_return),\n"
+	"\t.return_data(return_data),\n"
+	"\t.return_valid(return_valid),\n"
+	"\t//Avalon-MM ports\n"
+	"\t.avalon_clk(avalon_clk),\n"
+	"\t.addr(addr),\n"
+	"\t.w_data(w_data),\n"
+	"\t.r_data(r_data),\n"
+	"\t.w_en(w_en),\n"
+	"\t.r_en(r_en),\n"
+	"\t.chipselect(chipselect),\n"
+    ");\n";
+
+    r += "instr_encoder i0(\n"
+	"\t.clk(clk),\n"
+	"\t.reset(reset),\n"
+	"\t// custom interface\n"
+	"\t.ready(ready),\n"
+	"\t.valid(valid),\n"
+	"\t.data(data),\n"
+	"\t.start_return(start_return),\n"
+	"\t.return_data(return_data),\n"
+	"\t.return_valid(return_valid),\n"
+	"\t//HLS program interface\n"
+	"\t.opcode(opcode),\n"
+	"\t.dataa(dataa_out),\n"
+	"\t.datab(datab_out),\n"
+	"\t.start(start_out),\n"
+	"\t.data_to_hls(data_to_hls),\n"
+	"\t.data_to_hls_valid(data_to_hls_valid)\n"
+	"\t.hex_out()\n"
+    
+	");";
+
+
+    moduleContext topMdl = this->modules.back();
+
+    r += topMdl.getName() + " m0(\n"
+    "\t.clk(clk),\n"
+    "\t.clk_en(clk_en),\n"
+    "\t.reset(reset),\n"
+    "\t.start(start),\n"
+    "\t.done(done),\n"
+    "\t.d_out(result)";
+    for(int i = 0; i < topMdl.getInputs().size(); i++){
+        std::string wire = i == 0 ? "dataa" : "datab";
+        r += ",\n"
+        "\t." + topMdl.getInputs()[i] + "(" + wire + ")";
+    }  
+
+    r += ",\n"
+    "\t.opcode_output(opcode),\n"
+    "\t.dataa_out(dataa_out),\n"
+    "\t.datab_out(datab_out),\n"
+    "\t.start_out(start_out),\n"
+    "\t.data_from_remote(data_to_hls),\n"
+    "\t.data_from_remote_valid(data_to_hls_valid)\n";
+
+
+    r += ");\n";  
+
+    for(auto& [name, opcode] : this->remoteModules){
+       
+    }
+    
+    // always @ logic: update registarts
+    r += "\nalways_ff @ (posedge clk or posedge reset) begin\n"
+    "if(reset)\n"
+    "\tavalon_spi_reset <= 1'b1;"
+    "else if (!clk_en)\n"
+    "\tavalon_spi_reset <= 1'b1;"
+    "else\n"
+    "\tavalon_spi_reset <= 1'b0;"
+    "end\n\n";
+
+    r += "endmodule\n";
+    return r;
 }
 
 void systemContext::printAllVerilog(){
@@ -494,8 +852,18 @@ void systemContext::printAllVerilog(){
             moduleContext remMdl = this->findModule(mdl);
             std::string remModuleFile = "out/" + remMdl.getName() + "_remote.sv";
             outFile.open(remModuleFile);
-            
+            outFile << remMdl.printRemoteVerilog() << std::endl;
+            outFile.close();
         }
+        std::string remTopFile = "out/sysNaim_remote_top.sv"; 
+        outFile.open(remTopFile);
+        outFile << this->printRemoteTopVerilog() << std::endl;
+        outFile.close();
+        std::string hostTopFile = "out/sysNaim_host_top.sv";
+        outFile.open(hostTopFile);
+        outFile << this->printHostTopVerilog() << std::endl;
+        outFile.close();
     }
 }
+
 

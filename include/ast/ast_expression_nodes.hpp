@@ -543,7 +543,7 @@ class split_fpga_func_item: public ExpressionNode{
         if(list != NULL){list->printTree(n);}
 		std::cout << " }\n";
     }
-	void convertToIL(systemContext& ctx){{throw std::runtime_error("split_fpga_func_item not implemented");}}
+	void convertToIL(systemContext& ctx);
 	
 };
 
