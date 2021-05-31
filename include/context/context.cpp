@@ -215,7 +215,7 @@ std::string moduleContext::printVerilog(){
         "output [31:0] dataa_out,\n"
         "output [31:0] datab_out,\n"
         "output start_out,\n"
-        "input data_from_remote,\n"
+        "input [31:0] data_from_remote,\n"
         "input data_from_remote_valid\n";
     }
 
@@ -270,10 +270,15 @@ std::string moduleContext::printVerilog(){
 
         //submodule variables
         r += "wire " + info.doneSignal + ";\n"
-        "wire [31:0] " + info.outDataWire + ";\n";
+        "wire [31:0] " + info.outDataWire + ";\n"
+        "wire " + info.selectWire + ";\n"
+        "wire [31:0] " + info.dataaWire + ";\n"
+        "wire [31:0] " + info.databWire + ";\n"
+        "wire [31:0] " + info.returnDataWire + ";\n"
+        "wire " + info.returnDataValidWire + ";\n";
 
         //connecting wires
-        r += name + " " + info.moduleIdentifier +"(\n"
+        r += name + "_remote " + info.moduleIdentifier +"(\n"
         ".clk(clk),\n"
         ".clk_en(clk_en),\n"
         ".reset(reset),\n" + 
@@ -285,7 +290,7 @@ std::string moduleContext::printVerilog(){
         ".dataa_out(" + info.dataaWire + "),\n"
         ".datab_out(" + info.databWire + "),\n"
         ".data_from_remote(" + info.returnDataWire + "),\n"
-        ".data_from_remote_valid(" + info.returnDataValidWire + "),\n"
+        ".data_from_remote_valid(" + info.returnDataValidWire + ")\n"
         ");\n\n";
 
     }
@@ -300,7 +305,9 @@ std::string moduleContext::printVerilog(){
         "\t.data_from_remote(data_from_remote),\n"
         "\t.data_from_remote_valid(data_from_remote_valid)";
         
+        int counter = 1;
         for(auto& [name, info] : this->remoteModules){
+            counter++;
             std::string op = std::to_string(info.opcode);
             r += ",\n" //add new line from prev input
             "\t.select_in" + op + "(" + info.selectWire + "),\n"
@@ -310,16 +317,33 @@ std::string moduleContext::printVerilog(){
             "\t.data_from_remote_valid_in" + op + "(" + info.returnDataValidWire + ")";
         }
 
+        for (; counter <= 4; counter++){
+            r+= ",\n"
+            "\t.select_in" + std::to_string(counter) + "(1'b0)";
+        }
+
         r += ");\n";
     }   
 
     // always @ logic: update state
     r += "\nalways_ff @ (posedge clk or posedge reset) begin\n"
-    "if(reset)\n"
-    "\tstate <= 16'd0;\n"
-    "else if (!clk_en)\n"
-    "\tstate <= 16'd0;\n"
-    "else begin\n";
+    "if(reset) begin\n"
+    "\tstate <= 16'd0;\n";
+    for(auto const& [name, data] : this->variables){
+        r += ("\t" + name + " <= 32'd0;\n"); //TODO change to include arrays
+    }
+    r += "d_out <= 32'd0;\n"
+    "done <= 1'd0;\n";
+    r += "end\n";
+    r += "else if (!clk_en) begin\n"
+    "\tstate <= 16'd0;\n";
+    r += "d_out <= 32'd0;\n"
+    "done <= 1'd0;\n";
+    for(auto const& [name, data] : this->variables){
+        r += ("\t" + name + " <= 32'd0;\n"); //TODO change to include arrays
+    }
+    r += "end\n";
+    r += "else begin\n";
     for(auto const& [name, data] : this->variables){
         r += (name + " <= " + name + "_next;\n"); //TODO change to include arrays
     }
@@ -382,11 +406,11 @@ std::string moduleContext::printRemoteVerilog(){
         r += ("\ninput [31:0] " + name + ","); //TODO change to include arrays
     }
     r += "\noutput reg done,\n"
-    "output reg [31:0] d_out\n"
-    "output reg select_out\n"
-    "output reg [31:0] dataa_out\n"
-    "output reg [31:0] datab_out\n"
-    "input data_from_remote\n"
+    "output reg [31:0] d_out,\n"
+    "output reg select_out,\n"
+    "output reg [31:0] dataa_out,\n"
+    "output reg [31:0] datab_out,\n"
+    "input [31:0] data_from_remote,\n"
     "input data_from_remote_valid"
     ");\n\n"; //module inputs and outputs
 
@@ -440,13 +464,14 @@ std::string moduleContext::printRemoteVerilog(){
     std::string dataa_val = this->inputs.size() > 0 ? (" start ? " + this->inputs[0] + " : 32'd0;" ) : "32'd0"; 
     std::string datab_val = this->inputs.size() > 1 ? (" start ? " + this->inputs[1] + " : 32'd0;" ) : "32'd0"; 
     
-    r += "\tdataa_out_next = " + dataa_val + "\n";
-    r += "\tdatab_out_next = " + datab_val + "\n";
+    r += "\tdataa_out_next = " + dataa_val + ";\n";
+    r += "\tdatab_out_next = " + datab_val + ";\n";
     r += "end\n"
     "S_WAIT: begin\n"
     "\tstate_next = data_from_remote_valid ? S_IDLE : S_WAIT;\n"
     "\tdone_next = data_from_remote_valid;\n"
-    "\td_out_next = data_from_remote_valid ? data_from_remote : 32'd0;\n";    
+    "\td_out_next = data_from_remote_valid ? data_from_remote : 32'd0;\n"
+    "end\n";    
     r += "default: ;\n";
 
     r += "endcase\nend\n\nendmodule\n";
@@ -589,10 +614,9 @@ std::string systemContext::printRemoteTopVerilog(){
     r += "wire ready;\n"
     "wire valid;\n"
     "wire start_return;\n"
+    "wire process_done;\n"
     "wire [31:0] data;\n"
     "wire [31:0] return_data;\n"
-    "wire [31:0] dataa;\n"
-    "wire [31:0] datab;\n"
     "wire return_valid;\n\n";
 
 
@@ -604,15 +628,15 @@ std::string systemContext::printRemoteTopVerilog(){
     "wire [31:0] data_from_hls;\n"
     "wire data_from_hls_valid;\n";
 
-    r += "assign done = data_from_hls_valid;\n"
+    r += "assign done = process_done;\n"
     "assign result = data_from_hls;\n";
 
     for(auto& [name, opcode] : this->remoteModules){
-        r += "wire [31:0] start" + std::to_string(opcode) + ";\n"
+        r += "wire start" + std::to_string(opcode) + ";\n"
         "wire [31:0] dataa" + std::to_string(opcode) + ";\n"
-        "wire [7:0] datab" + std::to_string(opcode) + ";\n"
-        "wire data_from_remote" + std::to_string(opcode) + ";\n"
-        "wire [31:0] data_from_remote_valid" + std::to_string(opcode) + ";\n";
+        "wire [31:0] datab" + std::to_string(opcode) + ";\n"
+        "wire [31:0] data_from_remote" + std::to_string(opcode) + ";\n"
+        "wire data_from_remote_valid" + std::to_string(opcode) + ";\n";
     }
 
 
@@ -635,7 +659,7 @@ std::string systemContext::printRemoteTopVerilog(){
 	"\t.w_en(w_en),\n"
 	"\t.r_en(r_en),\n"
 	"\t.chipselect(chipselect),\n"
-	"\t.process_done()\n"
+	"\t.process_done(process_done)\n"
     ");\n";
 
     r += "instr_decoder i0(\n"
@@ -676,7 +700,6 @@ std::string systemContext::printRemoteTopVerilog(){
         "\t.data_from_remote" + op +"(data_from_remote" + op + "),\n"
         "\t.data_from_remote_valid" + op +"(data_from_remote_valid" + op + ")";
     }
-
     r+= ");\n\n";
 
     for(auto& [name, opcode] : this->remoteModules){
@@ -716,6 +739,8 @@ std::string systemContext::printHostTopVerilog(){
     r += ("module sysNaim_host_top"); // add initial module name and preamble
     r += ("(input clk,\ninput clk_en,\ninput start,\ninput reset,");
     r += "\noutput done,\n"
+    "input [31:0] dataa,\n"
+    "input [31:0] datab,\n"
     "output [31:0] result,\n"
     "output avalon_clk,\n"
     "input avalon_rst,\n"
@@ -741,13 +766,10 @@ std::string systemContext::printHostTopVerilog(){
     //signals between decoder and mux
     r +=   "wire [31:0] dataa_out;\n"
     "wire [31:0] datab_out;\n"
-    "wire [31:0] start_out;\n"
+    "wire start_out;\n"
     "wire [7:0] opcode;\n"
     "wire [31:0] data_to_hls;\n"
     "wire data_to_hls_valid;\n";
-
-    r += "assign done = data_from_hls_valid;\n"
-    "assign result = data_from_hls;\n";
 
     r += "spi_handler s0("
 	"\t.clk(clk),\n"
@@ -766,7 +788,7 @@ std::string systemContext::printHostTopVerilog(){
 	"\t.r_data(r_data),\n"
 	"\t.w_en(w_en),\n"
 	"\t.r_en(r_en),\n"
-	"\t.chipselect(chipselect),\n"
+	"\t.chipselect(chipselect)\n"
     ");\n";
 
     r += "instr_encoder i0(\n"
@@ -785,7 +807,7 @@ std::string systemContext::printHostTopVerilog(){
 	"\t.datab(datab_out),\n"
 	"\t.start(start_out),\n"
 	"\t.data_to_hls(data_to_hls),\n"
-	"\t.data_to_hls_valid(data_to_hls_valid)\n"
+	"\t.data_to_hls_valid(data_to_hls_valid),\n"
 	"\t.hex_out()\n"
     
 	");";
@@ -807,7 +829,7 @@ std::string systemContext::printHostTopVerilog(){
     }  
 
     r += ",\n"
-    "\t.opcode_output(opcode),\n"
+    "\t.opcode_out(opcode),\n"
     "\t.dataa_out(dataa_out),\n"
     "\t.datab_out(datab_out),\n"
     "\t.start_out(start_out),\n"
@@ -824,11 +846,11 @@ std::string systemContext::printHostTopVerilog(){
     // always @ logic: update registarts
     r += "\nalways_ff @ (posedge clk or posedge reset) begin\n"
     "if(reset)\n"
-    "\tavalon_spi_reset <= 1'b1;"
+    "\tavalon_spi_reset <= 1'b1;\n"
     "else if (!clk_en)\n"
-    "\tavalon_spi_reset <= 1'b1;"
+    "\tavalon_spi_reset <= 1'b1;\n"
     "else\n"
-    "\tavalon_spi_reset <= 1'b0;"
+    "\tavalon_spi_reset <= 1'b0;\n"
     "end\n\n";
 
     r += "endmodule\n";
