@@ -22,7 +22,7 @@ void IfStatement::convertToIL(systemContext& ctx){
     ctx.addExprState(condState);
     if(this->cond == NULL) throw std::runtime_error("cond pointer empty");
     this->cond->convertToIL(ctx);
-    ctx.getCurrentModule().addState("whileCondExpr", stateContainer(ctx.getExprState()));
+    ctx.getCurrentModule().addState("ifCondExpr", stateContainer(ctx.getExprState()));
     ctx.purgeExprState();
     //add branch state
     branchStateInfo ifBranch;
@@ -30,7 +30,7 @@ void IfStatement::convertToIL(systemContext& ctx){
     std::string tmpStateName = ctx.getCurrentModule().genStateName("tmp"); //used as a placeholder to jump to
     ifBranch.condVar = condVar;
     ifBranch.jumpLabel = tmpStateName;
-    tmpState1.jumpToHere.push_back(ctx.getCurrentModule().addState("whileBranch", stateContainer(ifBranch))); // add cond check state
+    tmpState1.jumpToHere.push_back(ctx.getCurrentModule().addState("ifBranch", stateContainer(ifBranch))); // add cond check state
     
     //print true statement
     if(this->_true == NULL) throw std::runtime_error("_true pointer empty");
